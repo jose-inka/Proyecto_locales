@@ -1,0 +1,1292 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>D&PD — Reporte Ventas & Stock Locales</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(20,142,116,.5);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(20,142,116,.85)}
+
+.dark{
+  --bg:#0d1624;--bg-main:rgb(17,29,41);--bg-card:#0B1520;
+  --brd:rgba(255,255,255,.08);--brd-c:rgba(255,255,255,.07);
+  --tx:#F2F2F2;--tx-m:rgba(242,242,242,.52);--tx-d:rgba(242,242,242,.3);
+  --pb-bg:rgba(255,255,255,.05);--pb-b:rgba(255,255,255,.14);--pb-c:rgba(242,242,242,.55);
+  --pb-ab:rgba(20,142,116,.2);--pb-ac:#148E74;
+  --tab-c:rgba(242,242,242,.45);
+  --inp-bg:rgba(255,255,255,.06);--inp-b:rgba(255,255,255,.16);--inp-c:rgba(242,242,242,.75);
+  --tog-bg:rgba(255,255,255,.07);--tog-c:rgba(242,242,242,.65)
+}
+.light{
+  --bg:#f3f5f8;--bg-main:#eaecf0;--bg-card:#ffffff;
+  --brd:rgba(0,0,0,.09);--brd-c:rgba(0,0,0,.07);
+  --tx:#111D29;--tx-m:rgba(17,29,41,.72);--tx-d:rgba(17,29,41,.52);
+  --pb-bg:rgba(17,29,41,.04);--pb-b:rgba(17,29,41,.14);--pb-c:rgba(17,29,41,.55);
+  --pb-ab:rgba(20,142,116,.12);--pb-ac:#0f7a63;
+  --tab-c:rgba(17,29,41,.45);
+  --inp-bg:rgba(17,29,41,.04);--inp-b:rgba(17,29,41,.15);--inp-c:rgba(17,29,41,.78);
+  --tog-bg:rgba(17,29,41,.07);--tog-c:rgba(17,29,41,.65)
+}
+
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Segoe UI',sans-serif;color:var(--tx)}
+.dash{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+
+/* HEADER */
+.hdr{flex:0 0 auto;display:flex;justify-content:space-between;align-items:flex-start;padding:12px 22px 10px;gap:18px;border-bottom:1px solid var(--brd);background:var(--bg)}
+.hl{display:flex;flex-direction:column;gap:3px}
+.h-title{font-family:'Trebuchet MS',sans-serif;font-size:16px;font-weight:700;color:var(--tx)}
+.h-sub{font-size:11px;color:var(--tx-m)}
+.h-tag{display:inline-flex;align-items:center;gap:5px;margin-top:3px;background:rgba(20,142,116,.1);border:1px solid rgba(20,142,116,.28);border-radius:4px;padding:2px 9px;font-family:'Trebuchet MS',sans-serif;font-size:10px;color:#148E74;width:fit-content}
+.h-dot{width:5px;height:5px;background:#148E74;border-radius:50%;flex-shrink:0}
+.hr{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.h-dates{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.h-upd{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx-m)}
+.u-dot{width:6px;height:6px;background:#1B8F43;border-radius:50%;flex-shrink:0}
+.h-upd strong{font-weight:500;color:var(--tx)}
+.h-cur{font-size:11px;color:var(--tx-d);text-align:right}
+.tbtn{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;border:1px solid var(--brd);background:var(--tog-bg);cursor:pointer;font-family:'Trebuchet MS',sans-serif;font-size:10px;color:var(--tog-c);white-space:nowrap;transition:all .15s;line-height:1}
+.tbtn:hover{border-color:rgba(20,142,116,.4);color:#148E74}
+.tbtn svg{width:14px;height:14px;flex-shrink:0;display:block}
+.logo-svg{height:28px;width:auto;display:block;flex-shrink:0;transition:filter .2s}
+.dark .logo-svg{filter:none}
+.light .logo-svg{filter:brightness(0) saturate(100%)}
+
+/* UPLOAD BAR */
+.upload-bar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:6px 22px;background:rgba(20,142,116,.06);border-bottom:1px solid rgba(20,142,116,.15)}
+.upload-btn{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:6px;border:1px dashed #148E74;background:rgba(20,142,116,.08);color:#148E74;font-size:10px;font-family:'Trebuchet MS',sans-serif;cursor:pointer;transition:all .15s}
+.upload-btn:hover{background:rgba(20,142,116,.18)}
+.upload-btn svg{width:13px;height:13px;flex-shrink:0}
+.upload-info{font-size:10px;color:var(--tx-m)}
+.upload-status{font-size:10px;font-weight:600;color:#148E74;white-space:nowrap}
+#csvInput{display:none}
+
+/* FILTER BAR */
+.fbar{flex:0 0 auto;display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 22px;border-bottom:1px solid var(--brd);background:var(--bg)}
+.fb-lbl{font-family:'Trebuchet MS',sans-serif;font-size:10px;font-weight:600;color:var(--tx-d);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.pbtn{padding:3px 10px;border-radius:12px;border:1px solid var(--pb-b);background:var(--pb-bg);color:var(--pb-c);font-size:10px;cursor:pointer;transition:all .15s;font-family:'Trebuchet MS',sans-serif;white-space:nowrap}
+.pbtn:hover,.pbtn.active{background:var(--pb-ab);border-color:var(--pb-ac);color:var(--pb-ac)}
+.fb-sep{width:1px;height:20px;background:var(--brd);flex-shrink:0}
+.date-wrap{display:flex;align-items:center;gap:5px}
+.d-lbl{font-size:10px;color:var(--tx-d);white-space:nowrap}
+input[type=date],input[type=text]{padding:3px 8px;border-radius:6px;border:1px solid var(--inp-b);background:var(--inp-bg);color:var(--inp-c);font-size:10px;cursor:pointer;outline:none}
+input[type=date]:focus,input[type=text]:focus{border-color:#148E74}
+.dark input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.5}
+select.pbtn{padding:3px 10px;appearance:none;cursor:pointer}
+
+/* CHART FILTER BAR */
+.cfilter-bar{flex:0 0 auto;display:none;align-items:center;flex-wrap:wrap;gap:6px;padding:6px 22px;background:rgba(215,169,29,.05);border-bottom:1px solid rgba(215,169,29,.2)}
+.cfilter-bar.visible{display:flex}
+.cfilter-lbl{font-family:'Trebuchet MS',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#D7A91D;white-space:nowrap}
+.cf-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:4px;background:rgba(215,169,29,.12);border:1px solid rgba(215,169,29,.3);font-size:10px;color:var(--tx-m)}
+.cf-chip span{font-weight:700;color:#D7A91D;font-family:'Trebuchet MS',sans-serif}
+.cf-x{cursor:pointer;color:#D7A91D;font-size:12px;line-height:1;padding:0 1px}
+.cf-x:hover{color:#f06060}
+.clear-all-btn{padding:2px 10px;border-radius:4px;border:1px solid rgba(240,96,96,.4);background:rgba(240,96,96,.08);color:#f06060;font-size:9px;cursor:pointer;font-family:'Trebuchet MS',sans-serif;white-space:nowrap}
+.clear-all-btn:hover{background:rgba(240,96,96,.18)}
+
+/* LOCALES PANEL */
+.locales-panel{flex:0 0 auto;display:none;align-items:center;flex-wrap:wrap;gap:6px;padding:7px 14px;border-bottom:1px solid var(--brd-c);border-left:4px solid #148E74;background:var(--bg-card);overflow-x:auto}
+.locales-panel.visible{display:flex}
+.locales-panel-title{font-family:'Trebuchet MS',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#148E74;white-space:nowrap;margin-right:4px}
+.local-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;background:rgba(20,142,116,.1);border:1px solid rgba(20,142,116,.2);font-size:10px;color:var(--tx-m);white-space:nowrap}
+.local-chip .lc-cod{font-weight:700;color:#148E74;font-family:'Trebuchet MS',sans-serif}
+.lc-aud{background:rgba(215,169,29,.1)!important;border-color:rgba(215,169,29,.3)!important;color:var(--tx-m)}
+.lc-sup{background:rgba(163,96,231,.1)!important;border-color:rgba(163,96,231,.3)!important;color:var(--tx-m)}
+.lp-sep{width:1px;height:18px;background:var(--brd-c);margin:0 6px;flex-shrink:0}
+
+/* LAYOUT */
+.body{flex:1 1 0;min-height:0;display:flex;overflow:hidden;background:var(--bg-main)}
+.aside{width:200px;flex:0 0 200px;overflow-y:auto;overflow-x:hidden;padding:10px 10px 10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.main{flex:1 1 0;min-width:0;min-height:0;overflow:hidden;display:flex;flex-direction:column;background:var(--bg-main)}
+.tabs-bar{flex:0 0 auto;display:flex;gap:2px;padding:8px 14px 0;border-bottom:1px solid var(--brd-c);background:var(--bg-main)}
+.tab{font-family:'Trebuchet MS',sans-serif;font-size:11px;padding:6px 14px;cursor:pointer;color:var(--tab-c);border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.tab:hover{color:var(--tx-m)}
+.tab.active{color:#148E74;border-bottom-color:#148E74}
+.tc{flex:1 1 0;min-height:0;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.hidden{display:none!important}
+
+/* ASIDE KPI */
+.aside-title{font-family:'Trebuchet MS',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tx-d);padding:0 2px;margin-top:4px}
+.kc{background:var(--bg-card);border-radius:8px;padding:10px 12px;border:1px solid var(--brd-c);border-left:3px solid #148E74;flex-shrink:0}
+.kb{font-family:'Trebuchet MS',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.kv{font-family:'Trebuchet MS',sans-serif;font-size:13px;font-weight:700;color:var(--tx);line-height:1.2;margin-bottom:2px}
+.kp{font-size:9px;color:var(--tx-d)}
+.pos{color:#148E74}.neg{color:#f06060}
+
+/* CHART CARDS */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cc{background:var(--bg-card);border-radius:9px;padding:12px 14px;border:1px solid var(--brd-c);display:flex;flex-direction:column;min-height:200px}
+.cc.tall{min-height:260px}
+.cc.full{grid-column:1/-1}
+.cc.interactive{cursor:pointer}
+.cc.interactive:hover{border-color:rgba(20,142,116,.3)}
+.ch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.ct{font-family:'Trebuchet MS',sans-serif;font-size:11px;font-weight:700;color:var(--tx)}
+.cs{font-size:9px;color:var(--tx-d);margin-top:2px}
+.chart-hint{font-size:8px;color:var(--tx-d);white-space:nowrap;padding:2px 6px;border-radius:3px;background:rgba(215,169,29,.1);border:1px solid rgba(215,169,29,.2);color:#D7A91D}
+.chart-wrap{flex:1;min-height:0;position:relative}
+
+/* KPI SUMMARY CARDS */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi-card{background:var(--bg-card);border-radius:9px;padding:14px 16px;border:1px solid var(--brd-c);border-top:3px solid #148E74}
+.kpi-label{font-family:'Trebuchet MS',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx-d);margin-bottom:4px}
+.kpi-value{font-family:'Trebuchet MS',sans-serif;font-size:20px;font-weight:700;color:var(--tx);line-height:1}
+.kpi-sub{font-size:9px;color:var(--tx-m);margin-top:3px}
+
+/* TABLE */
+.tc2{background:var(--bg-card);border-radius:9px;padding:12px 14px;border:1px solid var(--brd-c);flex-shrink:0}
+.tc2-inner{width:100%;overflow-x:auto;overflow-y:auto;max-height:340px;display:block}
+table{border-collapse:collapse;font-size:11px;width:100%;min-width:700px;table-layout:fixed}
+thead th{position:sticky;top:0;z-index:2;background:var(--bg-card);padding:7px 8px;font-family:'Trebuchet MS',sans-serif;font-size:10px;font-weight:700;color:var(--tx-m);text-align:left;border-bottom:1px solid var(--brd-c);white-space:nowrap}
+thead th.sortable{cursor:pointer;user-select:none}
+thead th.sortable:hover{color:var(--accent)}
+thead th.sort-asc::after{content:' ▲';color:var(--accent)}
+thead th.sort-desc::after{content:' ▼';color:var(--accent)}
+.clear-filtros-btn{border-color:rgba(220,60,60,.4)!important;color:#dc3c3c!important;background:rgba(220,60,60,.06)!important}
+.clear-filtros-btn:hover{background:rgba(220,60,60,.15)!important;border-color:#dc3c3c!important}
+.tbl-pagination{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 0 2px}
+.tbl-page-info{font-size:11px;color:var(--tx-d);min-width:60px;text-align:center}
+.tbl-pagination .pbtn:disabled{opacity:.35;cursor:default;pointer-events:none}
+tbody td{padding:6px 8px;border-bottom:1px solid var(--brd-c);color:var(--tx-m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+tbody tr:hover td{background:rgba(20,142,116,.05)}
+tbody tr:last-child td{border-bottom:none}
+.tnum{text-align:right;font-variant-numeric:tabular-nums}
+.t-filters{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.t-filters input,.t-filters select{padding:4px 8px;border-radius:6px;border:1px solid var(--inp-b);background:var(--inp-bg);color:var(--inp-c);font-size:10px;outline:none}
+.t-filters input:focus,.t-filters select:focus{border-color:#148E74}
+.badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:600;white-space:nowrap}
+.badge-inka{background:rgba(27,143,67,.15);color:#1B8F43}
+.badge-mia{background:rgba(163,96,231,.15);color:#A360E7}
+.badge-max{background:rgba(10,88,140,.15);color:#0A588C}
+.badge-other{background:rgba(255,255,255,.1);color:var(--tx-m)}
+</style>
+</head>
+<body class="dark" id="root">
+<div class="dash">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hl">
+    <span class="h-title">Reporte Ventas & Stock — Locales</span>
+    <span class="h-sub">Seguimiento de venta ecommerce, mesón y stock valorizado por local</span>
+    <div class="h-tag"><span class="h-dot"></span>Período activo: <span id="pLabel">Todo</span> &nbsp;·&nbsp; D&PD Analytics</div>
+  </div>
+  <div class="hr">
+    <div class="h-dates">
+      <div class="h-upd"><span class="u-dot"></span>Datos al <strong>2026-06-06</strong></div>
+      <span class="h-cur" id="hDate"></span>
+    </div>
+    <button class="tbtn" onclick="toggleTheme()">
+      <svg id="ticon" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.5 4.5M11.5 11.5L12.6 12.6M3.4 12.6L4.5 11.5M11.5 4.5L12.6 3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <span id="tlabel">Modo claro</span>
+    </button>
+    <svg class="logo-svg" viewBox="0 0 956 457" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M48.052 25.92C59.3133 25.92 68.388 27.6693 75.276 31.168C82.164 34.5573 87.1933 40.4067 90.364 48.716C93.5347 56.916 95.12 68.232 95.12 82.664C95.12 98.1893 93.5347 110.435 90.364 119.4C87.1933 128.365 82.164 134.707 75.276 138.424C68.388 142.141 59.3133 144 48.052 144H9.02V48.388L0 25.92H48.052ZM46.084 117.76C49.5827 117.76 52.3707 116.721 54.448 114.644C56.6347 112.457 58.22 108.849 59.204 103.82C60.188 98.6813 60.68 91.6293 60.68 82.664C60.68 74.464 60.2427 68.1773 59.368 63.804C58.4933 59.3213 57.0173 56.26 54.94 54.62C52.8627 52.98 49.9107 52.16 46.084 52.16H41V117.76H46.084ZM125.27 145.64C120.897 145.64 116.797 144.547 112.97 142.36C109.144 140.064 106.028 136.784 103.622 132.52C101.217 128.256 100.014 123.117 100.014 117.104C100.014 107.701 103.294 100.595 109.854 95.784C116.524 90.9733 125.106 88.568 135.602 88.568H142.654V79.548C142.654 76.3773 141.561 74.2453 139.374 73.152C137.188 71.9493 134.4 71.348 131.01 71.348C126.856 71.348 122.865 71.7307 119.038 72.496C115.212 73.2613 111.385 74.3547 107.558 75.776V52.816C112.478 51.7227 117.562 50.7387 122.81 49.864C128.168 48.88 133.525 48.388 138.882 48.388C144.896 48.388 150.417 49.1533 155.446 50.684C160.476 52.1053 164.521 54.7293 167.582 58.556C170.644 62.3827 172.174 67.8493 172.174 74.956V144H146.59L144.622 136.948C141.889 139.9 138.828 142.087 135.438 143.508C132.049 144.929 128.66 145.64 125.27 145.64ZM136.75 123.992C138.937 123.992 140.905 123.008 142.654 121.04V104.804H140.522C137.242 104.804 134.454 105.624 132.158 107.264C129.862 108.795 128.714 111.145 128.714 114.316C128.714 117.377 129.534 119.783 131.174 121.532C132.814 123.172 134.673 123.992 136.75 123.992Z" fill="white"/>
+      <path d="M9.02 287V191.388L0 168.92H47.232C57.072 168.92 65.2173 170.287 71.668 173.02C78.1187 175.644 82.9293 180.127 86.1 186.468C89.2707 192.809 90.856 201.447 90.856 212.38C90.856 227.468 87.248 238.347 80.032 245.016C72.816 251.685 61.8827 255.02 47.232 255.02H41V287H9.02ZM41 231.568C46.248 231.568 50.1293 230.147 52.644 227.304C55.268 224.461 56.58 219.377 56.58 212.052C56.58 206.476 56.088 202.267 55.104 199.424C54.2293 196.581 52.644 194.668 50.348 193.684C48.1613 192.591 45.0453 192.044 41 192.044V231.568Z" fill="white"/>
+      <circle cx="226" cy="235" r="56" stroke="white" stroke-width="2"/>
+      <circle cx="226" cy="235" r="27" fill="white"/>
+      <circle cx="226" cy="235" r="41.5" stroke="white" stroke-width="3"/>
+    </svg>
+  </div>
+</div>
+
+<!-- UPLOAD BAR -->
+<div class="upload-bar" id="uploadBar">
+  <button class="upload-btn" onclick="document.getElementById('csvInput').click()">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M8 10V3M5 6L8 3L11 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11V13H13V11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    Subir CSV
+  </button>
+  <span class="upload-info">Arrastra un CSV o haz clic — columnas: FECHA_VENTA, COD_POSU, LOCAL, FORMATO_LOCAL, MARCA, DEPARTAMENTO, VENTA_ECOMMERCE, VENTA_MESON, VENTA_TOTAL, CANT_STOCK, STOCK_VAL</span>
+  <span class="upload-status" id="uploadStatus">● Datos demo cargados (100 registros)</span>
+  <input type="file" id="csvInput" accept=".csv" onchange="handleFile(this.files[0])">
+</div>
+
+<!-- FILTER BAR -->
+<div class="fbar">
+  <span class="fb-lbl">Marca</span>
+  <button class="pbtn active" onclick="setFiltro('marca','',this)">Todas</button>
+  <button class="pbtn" onclick="setFiltro('marca','INKAFARMA',this)">Inkafarma</button>
+  <button class="pbtn" onclick="setFiltro('marca','MIA',this)">Mia</button>
+  <button class="pbtn" onclick="setFiltro('marca','MAX',this)">Max</button>
+  <div class="fb-sep"></div>
+  <span class="fb-lbl">Depto.</span>
+  <select class="pbtn" id="fDep" onchange="setFiltro('dep',this.value,null)"><option value="">Todos</option></select>
+  <div class="fb-sep"></div>
+  <span class="fb-lbl">Formato</span>
+  <select class="pbtn" id="fFmt" onchange="setFiltro('fmt',this.value,null)"><option value="">Todos</option></select>
+  <div class="fb-sep"></div>
+  <span class="fb-lbl">Cód. Local</span>
+  <input type="text" id="fCod" placeholder="Ej: AP1" oninput="clearTimeout(_dfTimer);_dfTimer=setTimeout(()=>setFiltro('cod',this.value.trim().toUpperCase(),null),320)" style="width:70px" onfocus="this.style.borderColor='#148E74'" onblur="this.style.borderColor='var(--inp-b)'">
+  <select class="pbtn" id="fCodSel" style="display:none" onchange="aplicarFiltros()"><option value="">Todos</option></select>
+  <div class="fb-sep"></div>
+  <span class="fb-lbl">Auditor</span>
+  <select class="pbtn" id="fAuditor" onchange="actualizarCascadas();aplicarFiltros()"><option value="">Todos</option></select>
+  <div class="fb-sep"></div>
+  <span class="fb-lbl">Supervisor</span>
+  <select class="pbtn" id="fSupervisor" onchange="actualizarCascadas();aplicarFiltros()"><option value="">Todos</option></select>
+  <span class="fb-lbl cascade-lbl" id="lblAudSup" style="display:none">Auditor</span>
+  <select class="pbtn" id="fAudSup" style="display:none" onchange="aplicarFiltros()"><option value="">Todos</option></select>
+  <div class="fb-sep"></div>
+  <span class="fb-lbl">Fechas</span>
+  <div class="date-wrap">
+    <span class="d-lbl">Desde</span>
+    <input type="date" id="fDesde" onchange="aplicarFiltros()">
+    <span class="d-lbl">Hasta</span>
+    <input type="date" id="fHasta" onchange="aplicarFiltros()">
+  </div>
+  <div class="fb-sep"></div>
+  <button class="pbtn clear-filtros-btn" onclick="limpiarTodosFiltros()" title="Eliminar todos los filtros">✕ Limpiar filtros</button>
+</div>
+
+<!-- CHART FILTER BAR -->
+<div class="cfilter-bar" id="cfilterBar">
+  <span class="cfilter-lbl">⚡ Filtro gráfico</span>
+  <div id="cfilterChips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+  <button class="clear-all-btn" onclick="clearAllChartFiltros()">Limpiar todo</button>
+</div>
+
+<!-- BODY -->
+<div class="body">
+  <!-- ASIDE -->
+  <aside class="aside">
+    <div class="aside-title">Totales</div>
+    <div class="kc" style="border-left-color:#1B8F43">
+      <div class="kb" style="color:#1B8F43">Venta Total</div>
+      <div class="kv" id="kVT">—</div>
+      <div class="kp" id="kVTn">— registros</div>
+    </div>
+    <div class="kc" style="border-left-color:#0A588C">
+      <div class="kb" style="color:#0A588C">Vta Ecommerce</div>
+      <div class="kv" id="kVE">—</div>
+      <div class="kp" id="kVEp">—% del total</div>
+    </div>
+    <div class="kc" style="border-left-color:#D7A91D">
+      <div class="kb" style="color:#D7A91D">Vta Mesón</div>
+      <div class="kv" id="kVM">—</div>
+      <div class="kp" id="kVMp">—% del total</div>
+    </div>
+    <div class="kc" style="border-left-color:#A360E7">
+      <div class="kb" style="color:#A360E7">Stock Val.</div>
+      <div class="kv" id="kSV">—</div>
+      <div class="kp" id="kSVu">— uds stock</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="tabs-bar">
+      <div class="tab active" onclick="setTab(0,this)">Resumen</div>
+      <div class="tab" onclick="setTab(1,this)">Ventas</div>
+      <div class="tab" onclick="setTab(2,this)">Promedio</div>
+      <div class="tab" onclick="setTab(3,this)">Detalle</div>
+    </div>
+
+    <!-- LOCALES PANEL (persistente en todas las pestañas) -->
+    <div id="localesPanel" class="locales-panel">
+      <span class="locales-panel-title">Locales en cálculo</span>
+      <div id="localesChips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+      <div class="lp-sep"></div>
+      <span class="locales-panel-title">Auditores</span>
+      <div id="auditoresChips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+      <div class="lp-sep"></div>
+      <span class="locales-panel-title">Supervisores</span>
+      <div id="supervisoresChips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+    </div>
+
+    <!-- TAB 0 RESUMEN -->
+    <div class="tc" id="tab0">
+      <div class="kpi-row">
+        <div class="kpi-card" style="border-top-color:#1B8F43">
+          <div class="kpi-label">Venta Total</div>
+          <div class="kpi-value" id="kp0">—</div>
+          <div class="kpi-sub" id="kp0s">—</div>
+        </div>
+        <div class="kpi-card" style="border-top-color:#0A588C">
+          <div class="kpi-label">Venta Ecommerce</div>
+          <div class="kpi-value" id="kp1">—</div>
+          <div class="kpi-sub" id="kp1s">—</div>
+        </div>
+        <div class="kpi-card" style="border-top-color:#D7A91D">
+          <div class="kpi-label">Venta Mesón</div>
+          <div class="kpi-value" id="kp2">—</div>
+          <div class="kpi-sub" id="kp2s">—</div>
+        </div>
+        <div class="kpi-card" style="border-top-color:#A360E7">
+          <div class="kpi-label">Stock Valorizado</div>
+          <div class="kpi-value" id="kp3">—</div>
+          <div class="kpi-sub" id="kp3s">—</div>
+        </div>
+      </div>
+      <div class="cc tall full interactive">
+        <div class="ch">
+          <div><div class="ct">Evolución de Ventas por Fecha</div><div class="cs">Ecommerce vs Mesón vs Total vs Stock Val.</div></div>
+          <span class="chart-hint">Clic en punto para filtrar</span>
+        </div>
+        <div class="chart-wrap"><canvas id="cEvol"></canvas></div>
+      </div>
+      <div class="cc tall full interactive">
+        <div class="ch">
+          <div><div class="ct">Evolución de Stock Valorizado por Fecha</div><div class="cs">Suma STOCK_VAL diario</div></div>
+          <span class="chart-hint">Clic en punto para filtrar</span>
+        </div>
+        <div class="chart-wrap"><canvas id="cEvolStock"></canvas></div>
+      </div>
+      <div class="row2">
+        <div class="cc tall interactive">
+          <div class="ch">
+            <div><div class="ct">Venta Total por Departamento</div><div class="cs">Suma VENTA_TOTAL</div></div>
+            <span class="chart-hint">Clic para filtrar</span>
+          </div>
+          <div class="chart-wrap"><canvas id="cDept"></canvas></div>
+        </div>
+        <div class="cc tall interactive">
+          <div class="ch">
+            <div><div class="ct">Distribución por Formato Local</div><div class="cs">% Venta Total</div></div>
+            <span class="chart-hint">Clic para filtrar</span>
+          </div>
+          <div class="chart-wrap"><canvas id="cFmt"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1 VENTAS -->
+    <div class="tc hidden" id="tab1">
+      <div class="cc tall full interactive">
+        <div class="ch">
+          <div><div class="ct">Ecommerce vs Mesón por Fecha</div><div class="cs">Comparativa canal de venta</div></div>
+          <span class="chart-hint">Clic para filtrar</span>
+        </div>
+        <div class="chart-wrap"><canvas id="cCmp"></canvas></div>
+      </div>
+      <div class="row2">
+        <div class="cc tall interactive">
+          <div class="ch">
+            <div><div class="ct">Top 10 Locales — Venta Total</div><div class="cs">Acumulado del período</div></div>
+            <span class="chart-hint">Clic para filtrar</span>
+          </div>
+          <div class="chart-wrap"><canvas id="cTop"></canvas></div>
+        </div>
+        <div class="cc tall interactive">
+          <div class="ch">
+            <div><div class="ct">Venta por Marca</div><div class="cs">Ecommerce vs Mesón</div></div>
+            <span class="chart-hint">Clic para filtrar</span>
+          </div>
+          <div class="chart-wrap"><canvas id="cMarca"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2 STOCK -->
+    <div class="tc hidden" id="tab2">
+      <div class="tc2">
+        <div class="ch">
+          <div>
+            <div class="ct">Promedio Diario por Local</div>
+            <div class="cs" id="prom-info">— locales · — días</div>
+          </div>
+        </div>
+        <div class="t-filters">
+          <input type="text" id="pSearch" placeholder="Buscar local o código..." oninput="_dp()">
+          <select id="pSort" onchange="renderPromedio()">
+            <option value="avgTotal-desc">Venta Prom. ↓</option>
+            <option value="avgTotal-asc">Venta Prom. ↑</option>
+            <option value="avgStock-desc">Stock Prom. ↓</option>
+            <option value="avgStock-asc">Stock Prom. ↑</option>
+            <option value="local-asc">Local A→Z</option>
+          </select>
+          <button class="pbtn clear-filtros-btn" onclick="limpiarFiltrosPromedio()">✕ Limpiar</button>
+        </div>
+        <div class="tc2-inner">
+          <table>
+            <colgroup><col style="width:7%"><col style="width:25%"><col style="width:8%"><col style="width:9%"><col style="width:13%"><col style="width:13%"><col style="width:12%"><col style="width:13%"></colgroup>
+            <thead><tr>
+              <th>Cód</th><th>Local</th><th>Marca</th><th>Formato</th>
+              <th class="tnum sortable" id="pth-avgTotal" onclick="sortPromedio('avgTotal')">Venta Prom./día</th>
+              <th class="tnum sortable" id="pth-avgStock" onclick="sortPromedio('avgStock')">Stock Val. Prom./día</th>
+              <th>Auditor</th><th>Supervisor</th>
+            </tr></thead>
+            <tbody id="tbPromedio"></tbody>
+          </table>
+        </div>
+        <div class="tbl-pagination">
+          <button class="pbtn" id="prom-prev" onclick="goToPageProm(-1)" disabled>&#8592; Anterior</button>
+          <span class="tbl-page-info" id="prom-page-info">1 / 1</span>
+          <button class="pbtn" id="prom-next" onclick="goToPageProm(1)" disabled>Siguiente &#8594;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3 DETALLE -->
+    <div class="tc hidden" id="tab3">
+      <div class="tc2">
+        <div class="ch">
+          <div><div class="ct">Tabla Detallada</div><div class="cs" id="tbl-count">— registros</div></div>
+        </div>
+        <div class="t-filters">
+          <input type="text" id="tSearch" placeholder="Buscar local..." oninput="_dt()">
+          <select id="tDep" onchange="filtrarTabla()"><option value="">Departamento</option></select>
+          <select id="tFmt" onchange="filtrarTabla()"><option value="">Formato</option></select>
+          <select id="tMarca" onchange="filtrarTabla()"><option value="">Marca</option></select>
+          <input type="date" id="tDesde" onchange="filtrarTabla()">
+          <input type="date" id="tHasta" onchange="filtrarTabla()">
+          <button class="pbtn clear-filtros-btn" onclick="limpiarFiltrosDetalle()" title="Limpiar filtros de esta tabla">✕ Limpiar</button>
+        </div>
+        <div class="tc2-inner">
+          <table>
+            <colgroup><col style="width:9%"><col style="width:5%"><col style="width:12%"><col style="width:8%"><col style="width:6%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:16%"><col style="width:6%"><col style="width:7%"></colgroup>
+            <thead><tr><th class="sortable" id="th-fecha" onclick="sortTabla('fecha')">Fecha</th><th>Cód</th><th>Local</th><th>Formato</th><th>Marca</th><th>Depto.</th><th class="tnum sortable" id="th-eco" onclick="sortTabla('eco')">Ecommer.</th><th class="tnum sortable" id="th-meson" onclick="sortTabla('meson')">Mesón</th><th class="tnum sortable" id="th-total" onclick="sortTabla('total')">Total</th><th class="tnum sortable" id="th-stockVal" onclick="sortTabla('stockVal')">Stock Val.</th><th>SKU Mayor Venta</th><th>Auditor</th><th>Supervisor</th></tr></thead>
+            <tbody id="tbDetalle"></tbody>
+          </table>
+        </div>
+        <div class="tbl-pagination">
+          <button class="pbtn" id="tbl-prev" onclick="goToPage(-1)" disabled>&#8592; Anterior</button>
+          <span class="tbl-page-info" id="tbl-page-info">1 / 1</span>
+          <button class="pbtn" id="tbl-next" onclick="goToPage(1)" disabled>Siguiente &#8594;</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+
+<script>
+// ── DATOS DEMO ──
+const DEMO = [
+["2026-05-28","AP1","ICA 2","INKA MAS","INKAFARMA","ICA",253.2,12572.3,12825.5,21732.07,430523.9],
+["2026-05-28","AH0","SALGUERO","INKA MAS","INKAFARMA","LIMA",986.1,13521.39,14507.49,22599.39,537115.63],
+["2026-05-31","BQ4","LAS CASCADAS","INKA MAS","INKAFARMA","LIMA",78.8,11343.49,11422.29,15498.83,356983.23],
+["2026-05-31","AP1","ICA 2","INKA MAS","INKAFARMA","ICA",135.8,6886,7021.8,21692.17,428653.39],
+["2026-05-30","AC9","EJERCITO","INKA MAS","INKAFARMA","LIMA",686.55,13845.77,14532.32,20939.02,573173.98],
+["2026-05-30","BJ6","FAUCETT","INKA MAS","INKAFARMA","LIMA",656.6,13394.83,14051.43,21737.81,533719.06],
+["2026-05-30","AP1","ICA 2","INKA MAS","INKAFARMA","ICA",209.8,12875.83,13085.63,21963.56,433049.73],
+["2026-05-30","AI3","CHOSICA 1","INKA MAS","INKAFARMA","LIMA",513.6,7297.11,7810.71,15843.9,334709.48],
+["2026-05-30","FM1","LARCO 3","INKA MAS","INKAFARMA","LIMA",940.1,18274.39,19214.49,23741.96,531007.9],
+["2026-05-30","HK0","UNIVERSITARIA SAN MIGUEL","INKA MAS","INKAFARMA","LIMA",0,3688.67,3688.67,12879.54,312967.73],
+["2026-05-31","I74","MIA I74 RP PIURA","MIA","MIA","PIURA",0,13932.69,13932.69,0,0],
+["2026-05-31","J29","MAX 002 LARCO","MAX","MAX","LIMA",0,1238.31,1238.31,0,0],
+["2026-05-31","I73","MIA I73 RP PURUCHUCO","MIA","MIA","LIMA",0,12317.62,12317.62,0,0],
+["2026-05-31","J06","MFA J06 MA AREQUIPA","MIA","MIA","AREQUIPA",0,12457.4,12457.4,0,0],
+["2026-05-31","GE6","DELIVERY CENTER SURQUILLO 2","DELIVERY CENTER","INKAFARMA","LIMA",115982.11,0,115982.11,152202.4,4010152.37],
+["2026-06-06","HJ8","CHACHAPOYAS 3","INKA MAS","INKAFARMA","AMAZONAS",0,13948.95,13948.95,15722.5,361195.93],
+["2026-06-06","AE8","CHIMU 1","INKA MAS","INKAFARMA","LIMA",1209.7,13314.28,14523.98,18800.22,433049.4],
+["2026-06-06","AP1","ICA 2","INKA MAS","INKAFARMA","ICA",673.8,13539.07,14212.87,22021.13,433397.08],
+["2026-05-29","AP1","ICA 2","INKA MAS","INKAFARMA","ICA",621.86,11965.31,12587.17,21217.07,424080.5],
+["2026-05-29","BJ6","FAUCETT","INKA MAS","INKAFARMA","LIMA",1488.02,12554.38,14042.4,21767.7,531045.23],
+["2026-05-29","BQ4","LAS CASCADAS","INKA MAS","INKAFARMA","LIMA",1301.8,8266,9567.8,15927.39,365047.58],
+["2026-05-29","AE8","CHIMU 1","INKA MAS","INKAFARMA","LIMA",570.64,10285.41,10856.05,16537.3,399062.3],
+["2026-05-29","AC9","EJERCITO","INKA MAS","INKAFARMA","LIMA",498.54,11373.97,11872.51,21024.71,574999.3],
+["2026-06-03","AH0","SALGUERO","INKA MAS","INKAFARMA","LIMA",436.01,16678.31,17114.32,22611.34,542796.63],
+["2026-06-03","AC9","EJERCITO","INKA MAS","INKAFARMA","LIMA",300.2,11849.56,12149.76,22470.81,608618.73],
+["2026-05-28","I74","MIA I74 RP PIURA","MIA","MIA","PIURA",0,4899.17,4899.17,0,0],
+["2026-05-28","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",103488.69,1010,104498.69,82548.66,2764554.72],
+["2026-05-28","FZ5","REPUBLICA DOMINICANA 2","INKA MAS","INKAFARMA","LIMA",1368.35,9323.6,10691.95,30936.81,660007.46],
+["2026-05-30","J06","MFA J06 MA AREQUIPA","MIA","MIA","AREQUIPA",0,12241.57,12241.57,0,0],
+["2026-05-30","I73","MIA I73 RP PURUCHUCO","MIA","MIA","LIMA",0,10453.79,10453.79,0,0],
+["2026-05-30","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",90687.03,0,90687.03,82045.71,2770858.38],
+["2026-06-04","I74","MIA I74 RP PIURA","MIA","MIA","PIURA",0,5467.55,5467.55,22920,980602.79],
+["2026-06-04","GE6","DELIVERY CENTER SURQUILLO 2","DELIVERY CENTER","INKAFARMA","LIMA",129578.65,0,129578.65,143400.44,3782327.19],
+["2026-06-04","AP1","ICA 2","INKA MAS","INKAFARMA","ICA",56.7,11970.65,12027.35,21902.66,431103.69],
+["2026-06-04","BQ4","LAS CASCADAS","INKA MAS","INKAFARMA","LIMA",72.5,9501.32,9573.82,15829.62,361421.93],
+["2026-06-04","AI3","CHOSICA 1","INKA MAS","INKAFARMA","LIMA",203.4,5231.46,5434.86,15971.65,333757.17],
+["2026-06-04","BJ6","FAUCETT","INKA MAS","INKAFARMA","LIMA",498.46,15120.35,15618.81,21690.38,540769.56],
+["2026-06-02","FZ5","REPUBLICA DOMINICANA 2","INKA MAS","INKAFARMA","LIMA",657.5,11037.13,11694.63,29806.21,633261.78],
+["2026-06-02","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",92252.76,52,92304.76,76568.71,2659905.3],
+["2026-06-02","GE6","DELIVERY CENTER SURQUILLO 2","DELIVERY CENTER","INKAFARMA","LIMA",137148.14,99,137247.14,146062.67,3868845.29],
+["2026-05-31","BJ6","FAUCETT","INKA MAS","INKAFARMA","LIMA",3575.47,13393.05,16968.52,21200.45,524202.19],
+["2026-06-05","AP1","ICA 2","INKA MAS","INKAFARMA","ICA",218.7,13652.52,13871.22,21390.41,424571.91],
+["2026-06-05","AB1","AREQUIPA 1","INKA MAS","INKAFARMA","AREQUIPA",1110.03,24826.4,25936.43,26227.22,649509.61],
+["2026-06-05","AC9","EJERCITO","INKA MAS","INKAFARMA","LIMA",466.78,12691,13157.78,22302.29,609710.96],
+["2026-06-05","AH0","SALGUERO","INKA MAS","INKAFARMA","LIMA",542.7,21037.64,21580.34,22631.68,538281.15],
+["2026-06-01","HK0","UNIVERSITARIA SAN MIGUEL","INKA MAS","INKAFARMA","LIMA",0,3455.6,3455.6,12564.66,309031.71],
+["2026-06-01","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",93564.64,14,93578.64,75736.08,2593586.32],
+["2026-06-02","AB1","AREQUIPA 1","INKA MAS","INKAFARMA","AREQUIPA",562.5,24966.17,25528.67,24706.55,622411.95],
+["2026-06-02","BQ4","LAS CASCADAS","INKA MAS","INKAFARMA","LIMA",440.97,9856.65,10297.62,15855.04,363891.59],
+["2026-06-05","FM1","LARCO 3","INKA MAS","INKAFARMA","LIMA",406.3,17313.01,17719.31,23877.29,534687.13],
+["2026-06-05","I73","MIA I73 RP PURUCHUCO","MIA","MIA","LIMA",0,6522.76,6522.76,21841,949847.97],
+["2026-06-05","GE6","DELIVERY CENTER SURQUILLO 2","DELIVERY CENTER","INKAFARMA","LIMA",127381.14,51.5,127432.64,148610.52,3867627.62],
+["2026-06-05","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",80816.17,3.9,80820.07,82747.39,2829176.43],
+["2026-06-03","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",82600.55,265.5,82866.05,80208.48,2740078.05],
+["2026-06-06","J06","MFA J06 MA AREQUIPA","MIA","MIA","AREQUIPA",0,14620.69,14620.69,17303,795962.51],
+["2026-06-01","I75","MIA I75 RP CUSCO","MIA","MIA","CUSCO",0,9311.85,9311.85,21490,754714.54],
+["2026-06-01","I74","MIA I74 RP PIURA","MIA","MIA","PIURA",0,4798.53,4798.53,22738,977556.94],
+["2026-05-29","I76","MIA I76 PLAZA SAN MIGUEL","MIA","MIA","LIMA",0,4298.2,4298.2,0,0],
+["2026-05-29","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",86583.32,12.4,86595.72,82312.84,2788046.65],
+["2026-06-02","GU8","KANTU MERCADO CENTRAL","KANTU","INKAFARMA","LIMA",0,36151.6,36151.6,5516,233803.93],
+["2026-06-01","BQ4","LAS CASCADAS","INKA MAS","INKAFARMA","LIMA",516.2,8770.4,9286.6,15577.27,359901.15],
+["2026-06-06","I73","MIA I73 RP PURUCHUCO","MIA","MIA","LIMA",0,9012.06,9012.06,21762,947440.6],
+["2026-05-30","I76","MIA I76 PLAZA SAN MIGUEL","MIA","MIA","LIMA",0,14428.74,14428.74,0,0],
+["2026-06-04","FZ5","REPUBLICA DOMINICANA 2","INKA MAS","INKAFARMA","LIMA",641.12,10794.21,11435.33,30520.64,648671.38],
+["2026-05-31","FM1","LARCO 3","INKA MAS","INKAFARMA","LIMA",337.4,14124.06,14461.46,23254.37,521328.3],
+["2026-06-01","HJ8","CHACHAPOYAS 3","INKA MAS","INKAFARMA","AMAZONAS",0,9401.83,9401.83,12255.95,286586.26],
+["2026-06-03","HG9","DC MIA CAPPA","MIA","MIA","CALLAO",1647.5,0,1647.5,0,0],
+["2026-06-02","I76","MIA I76 PLAZA SAN MIGUEL","MIA","MIA","LIMA",0,7081.71,7081.71,23677,870484.91],
+["2026-06-03","I73","MIA I73 RP PURUCHUCO","MIA","MIA","LIMA",0,5224.39,5224.39,21819,948710.01],
+["2026-05-29","J06","MFA J06 MA AREQUIPA","MIA","MIA","AREQUIPA",0,7247.81,7247.81,0,0],
+["2026-06-02","J06","MFA J06 MA AREQUIPA","MIA","MIA","AREQUIPA",0,5158.94,5158.94,17277,792585.77],
+["2026-06-03","J29","MAX 002 LARCO","MAX","MAX","LIMA",0,2267.68,2267.68,4264,131649.87],
+["2026-06-06","HG9","DC MIA CAPPA","MIA","MIA","CALLAO",1186.79,0,1186.79,0,0],
+["2026-05-30","HH0","DC MIA SURQUILLO 2","MIA","MIA","LIMA",3950.03,0,3950.03,0,0],
+["2026-06-04","HH0","DC MIA SURQUILLO 2","MIA","MIA","LIMA",1281.83,0,1281.83,0,0],
+["2026-05-28","HH0","DC MIA SURQUILLO 2","MIA","MIA","LIMA",1629.04,0,1629.04,0,0],
+["2026-05-29","HJ8","CHACHAPOYAS 3","INKA MAS","INKAFARMA","AMAZONAS",0,0.1,0.1,11349.09,263167.66],
+["2026-05-31","AB1","AREQUIPA 1","INKA MAS","INKAFARMA","AREQUIPA",643.3,7252.76,7896.06,23664.9,603478.69],
+["2026-05-28","BQ4","LAS CASCADAS","INKA MAS","INKAFARMA","LIMA",162.5,7756.46,7918.96,15717.88,347573.3],
+["2026-05-28","AB1","AREQUIPA 1","INKA MAS","INKAFARMA","AREQUIPA",1688.6,25251.47,26940.07,23980.61,610908.36],
+["2026-05-28","AE8","CHIMU 1","INKA MAS","INKAFARMA","LIMA",407,10326.76,10733.76,16353.25,396293.66],
+["2026-05-28","AC9","EJERCITO","INKA MAS","INKAFARMA","LIMA",673.43,13277.54,13950.97,21121.07,576184.79],
+["2026-05-28","GU8","KANTU MERCADO CENTRAL","KANTU","INKAFARMA","LIMA",0,16786.1,16786.1,5681.8,228717.11],
+["2026-05-31","AH0","SALGUERO","INKA MAS","INKAFARMA","LIMA",777.32,17842.7,18620.02,21875.08,531715.11],
+["2026-05-31","AI3","CHOSICA 1","INKA MAS","INKAFARMA","LIMA",583.7,6769.73,7353.43,15617.14,330865.36],
+["2026-05-31","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",76572.8,0,76572.8,78974.43,2689984.02],
+["2026-05-30","AE8","CHIMU 1","INKA MAS","INKAFARMA","LIMA",468.2,13559.78,14027.98,17662.85,422248.98],
+["2026-05-31","I76","MIA I76 PLAZA SAN MIGUEL","MIA","MIA","LIMA",0,13855.67,13855.67,0,0],
+["2026-05-31","I75","MIA I75 RP CUSCO","MIA","MIA","CUSCO",0,13127.33,13127.33,0,0],
+["2026-06-06","FZ5","REPUBLICA DOMINICANA 2","INKA MAS","INKAFARMA","LIMA",2215.6,14200.27,16415.87,30863.41,652503.38],
+["2026-06-06","I74","MIA I74 RP PIURA","MIA","MIA","PIURA",0,10984.21,10984.21,22822,981562.04],
+["2026-06-06","GE6","DELIVERY CENTER SURQUILLO 2","DELIVERY CENTER","INKAFARMA","LIMA",118618.58,40,118658.58,145287.54,3765619.25],
+["2026-06-06","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",86165.33,0,86165.33,81800.88,2794016.83],
+["2026-06-06","HK0","UNIVERSITARIA SAN MIGUEL","INKA MAS","INKAFARMA","LIMA",0,4806.93,4806.93,14592.26,361004.07],
+["2026-06-06","AB1","AREQUIPA 1","INKA MAS","INKAFARMA","AREQUIPA",1035.64,26250.37,27286.01,26410.38,658942.83],
+["2026-05-29","AH0","SALGUERO","INKA MAS","INKAFARMA","LIMA",814.32,17442.14,18256.46,22547.84,544443],
+["2026-06-03","BQ4","LAS CASCADAS","INKA MAS","INKAFARMA","LIMA",42.3,12030.87,12073.17,15893.46,361547.07],
+["2026-06-03","AB1","AREQUIPA 1","INKA MAS","INKAFARMA","AREQUIPA",785.98,27347.8,28133.78,24000.9,607596.98],
+["2026-06-03","AP1","ICA 2","INKA MAS","INKAFARMA","ICA",691.61,10261.01,10952.62,21427.81,424850.06],
+["2026-06-03","AE8","CHIMU 1","INKA MAS","INKAFARMA","LIMA",686.6,11848.6,12535.2,18153.63,432089.16],
+["2026-06-03","AI3","CHOSICA 1","INKA MAS","INKAFARMA","LIMA",0,5026.54,5026.54,16023.6,333605.14],
+["2026-05-29","GU8","KANTU MERCADO CENTRAL","KANTU","INKAFARMA","LIMA",0,7803,7803,5401.8,220898.01],
+["2026-05-28","FM1","LARCO 3","INKA MAS","INKAFARMA","LIMA",2891.5,15799.91,18691.41,23851.82,533823.64],
+["2026-05-28","I75","MIA I75 RP CUSCO","MIA","MIA","CUSCO",0,8163.48,8163.48,0,0],
+["2026-05-30","FZ5","REPUBLICA DOMINICANA 2","INKA MAS","INKAFARMA","LIMA",1034.5,19472.73,20507.23,30719.39,651683.34],
+["2026-05-30","GE6","DELIVERY CENTER SURQUILLO 2","DELIVERY CENTER","INKAFARMA","LIMA",135450.18,0,135450.18,158152.16,4150411.77],
+["2026-05-30","HG9","DC MIA CAPPA","MIA","MIA","CALLAO",1591.78,0,1591.78,0,0],
+["2026-06-04","J06","MFA J06 MA AREQUIPA","MIA","MIA","AREQUIPA",0,6645.22,6645.22,17047,785845.13],
+["2026-06-04","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",88148.14,0,88148.14,80478.86,2745298.58]
+];
+
+// ── ESTADO ──
+let allData = DEMO.map(r=>({fecha:r[0],cod:r[1],local:r[2],formato:r[3],marca:r[4],depto:r[5],eco:+r[6],meson:+r[7],total:+r[8],stock:+r[9],stockVal:+r[10]}));
+let filtros = {marca:'',dep:'',fmt:'',cod:'',desde:'',hasta:'',auditor:'',supervisor:''};
+let chartFiltros = {depto:null,formato:null,fecha:null,cod:null,marca:null};
+let charts = {};
+let isDark = true;
+let filteredData = [];
+let cachedAgg = null;   // agregaciones pre-computadas de filteredData
+const PAGE_SIZE = 500;  // filas por página en la tabla
+let tblPage = 0;        // página actual de la tabla
+let _dfTimer, _dtTimer; // timers para debounce
+
+const C = {
+  verde:'#1B8F43', azul:'#0A588C', dorado:'#D7A91D', purpura:'#A360E7',
+  teal:'#148E74', naranja:'#FA6F1C',
+  a(hex,op){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return `rgba(${r},${g},${b},${op})`;}
+};
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('hDate').textContent=new Date().toLocaleDateString('es-PE',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  poblarSelectores();
+  aplicarFiltros();
+  document.getElementById('uploadBar').addEventListener('dragover',e=>{e.preventDefault();});
+  document.getElementById('uploadBar').addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+});
+
+// ── SELECTORES ──
+// ── DEBOUNCE HELPERS ──
+function _df(){clearTimeout(_dfTimer);_dfTimer=setTimeout(aplicarFiltros,320);}
+function _dt(){clearTimeout(_dtTimer);_dtTimer=setTimeout(filtrarTabla,320);}
+
+// ── PRE-AGREGACIÓN (un solo pase O(n)) ──
+function computeAgg(data){
+  const byFecha=new Map(),byDepto=new Map(),byFormato=new Map(),byMarca=new Map(),byLocal=new Map();
+  for(const d of data){
+    let f=byFecha.get(d.fecha);
+    if(!f){f={total:0,eco:0,meson:0,stockVal:0,stock:0};byFecha.set(d.fecha,f);}
+    f.total+=d.total;f.eco+=d.eco;f.meson+=d.meson;f.stockVal+=d.stockVal;f.stock+=d.stock;
+
+    let dep=byDepto.get(d.depto);
+    if(!dep){dep={total:0,stockVal:0};byDepto.set(d.depto,dep);}
+    dep.total+=d.total;dep.stockVal+=d.stockVal;
+
+    let fmt=byFormato.get(d.formato);
+    if(!fmt){fmt={total:0,stock:0};byFormato.set(d.formato,fmt);}
+    fmt.total+=d.total;fmt.stock+=d.stock;
+
+    let m=byMarca.get(d.marca);
+    if(!m){m={eco:0,meson:0};byMarca.set(d.marca,m);}
+    m.eco+=d.eco;m.meson+=d.meson;
+
+    let loc=byLocal.get(d.local);
+    if(!loc){loc={total:0,cod:d.cod,auditor:d.auditor||'',supervisor:d.supervisor||''};byLocal.set(d.local,loc);}
+    loc.total+=d.total;
+  }
+  return{byFecha,byDepto,byFormato,byMarca,byLocal};
+}
+
+function poblarSelectores(){
+  const deps=[...new Set(allData.map(d=>d.depto))].sort();
+  const fmts=[...new Set(allData.map(d=>d.formato))].sort();
+  const marcas=[...new Set(allData.map(d=>d.marca))].sort();
+  ['fDep','tDep'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const v=el.value;el.innerHTML='<option value="">Todos</option>'+deps.map(d=>`<option value="${d}">${d}</option>`).join('');el.value=v;});
+  ['fFmt','tFmt'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const v=el.value;el.innerHTML='<option value="">Todos</option>'+fmts.map(f=>`<option value="${f}">${f}</option>`).join('');el.value=v;});
+  const tMarca=document.getElementById('tMarca');if(tMarca)tMarca.innerHTML='<option value="">Marca</option>'+marcas.map(m=>`<option value="${m}">${m}</option>`).join('');
+  const fechas=allData.map(d=>d.fecha).sort();
+  const minF=fechas[0],maxF=fechas[fechas.length-1];
+  ['fDesde','tDesde'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=minF;});
+  ['fHasta','tHasta'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=maxF;});
+  if(!filtros.desde)filtros.desde=minF;
+  if(!filtros.hasta)filtros.hasta=maxF;
+  const fCod=document.getElementById('fCod');if(fCod)fCod.value='';
+  const auds=[...new Set(allData.map(d=>d.auditor).filter(Boolean))].sort();
+  const sups=[...new Set(allData.map(d=>d.supervisor).filter(Boolean))].sort();
+  const fAud=document.getElementById('fAuditor');
+  if(fAud){const v=fAud.value;fAud.innerHTML='<option value="">Todos</option>'+auds.map(a=>`<option value="${a}">${a}</option>`).join('');fAud.value=v;}
+  const fSup=document.getElementById('fSupervisor');
+  if(fSup){const v=fSup.value;fSup.innerHTML='<option value="">Todos</option>'+sups.map(s=>`<option value="${s}">${s}</option>`).join('');fSup.value=v;}
+}
+
+// ── FILTROS BARRA ──
+function setFiltro(tipo,val,btn){
+  if(btn){document.querySelectorAll(`.fbar .pbtn[onclick*="setFiltro('${tipo}'"]`).forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  filtros[tipo==='dep'?'dep':tipo==='fmt'?'fmt':tipo]=val;
+  aplicarFiltros();
+}
+
+// ── FILTROS GRÁFICO ──
+function toggleChartFiltro(tipo,val){
+  chartFiltros[tipo]=chartFiltros[tipo]===val?null:val;
+  actualizarCfilterBar();actualizarCharts();actualizarKPIs();filtrarTabla();actualizarPromedio();actualizarLocalesPanel();
+}
+function clearChartFiltro(tipo){chartFiltros[tipo]=null;actualizarCfilterBar();actualizarCharts();actualizarKPIs();filtrarTabla();actualizarPromedio();actualizarLocalesPanel();}
+function clearAllChartFiltros(){Object.keys(chartFiltros).forEach(k=>chartFiltros[k]=null);actualizarCfilterBar();actualizarCharts();actualizarKPIs();filtrarTabla();actualizarPromedio();actualizarLocalesPanel();}
+
+function actualizarCfilterBar(){
+  const bar=document.getElementById('cfilterBar');
+  const chips=document.getElementById('cfilterChips');
+  const labels={depto:'Depto',formato:'Formato',fecha:'Fecha',cod:'Local',marca:'Marca'};
+  const activos=Object.entries(chartFiltros).filter(([k,v])=>v!==null);
+  if(!activos.length){bar.classList.remove('visible');return;}
+  bar.classList.add('visible');
+  chips.innerHTML=activos.map(([k,v])=>`
+    <div class="cf-chip">
+      <span>${labels[k]}</span>: ${v}
+      <span class="cf-x" onclick="clearChartFiltro('${k}')">✕</span>
+    </div>`).join('');
+}
+
+// ── FILTROS CASCADA ──
+function actualizarCascadas(){
+  const audVal=(document.getElementById('fAuditor')||{value:''}).value;
+  const supVal=(document.getElementById('fSupervisor')||{value:''}).value;
+  // Cód. Local por Auditor — usa el filtro existente fCod/fCodSel
+  const fCod=document.getElementById('fCod');
+  const fCodSel=document.getElementById('fCodSel');
+  if(fCodSel&&fCod){
+    if(audVal){
+      const cods=[...new Set(allData.filter(d=>d.auditor===audVal&&d.cod).map(d=>d.cod))].sort();
+      fCodSel.innerHTML='<option value="">Todos</option>'+cods.map(c=>`<option value="${c}">${c}</option>`).join('');
+      fCodSel.value='';
+      fCod.value='';fCod.style.display='none';fCodSel.style.display='';
+    } else {fCodSel.value='';fCodSel.style.display='none';fCod.style.display='';}
+  }
+  // Auditor por Supervisor
+  const fAudSup=document.getElementById('fAudSup');
+  const lblAudSup=document.getElementById('lblAudSup');
+  if(fAudSup&&lblAudSup){
+    if(supVal){
+      const auds=[...new Set(allData.filter(d=>d.supervisor===supVal&&d.auditor).map(d=>d.auditor))].sort();
+      fAudSup.innerHTML='<option value="">Todos</option>'+auds.map(a=>`<option value="${a}">${a}</option>`).join('');
+      fAudSup.value='';
+      fAudSup.style.display='';lblAudSup.style.display='';
+    } else {fAudSup.value='';fAudSup.style.display='none';lblAudSup.style.display='none';}
+  }
+}
+
+// ── APLICAR FILTROS ──
+function aplicarFiltros(){
+  filtros.desde=document.getElementById('fDesde').value;
+  filtros.hasta=document.getElementById('fHasta').value;
+  filtros.dep=document.getElementById('fDep').value;
+  filtros.fmt=document.getElementById('fFmt').value;
+  const _fCodSel=document.getElementById('fCodSel');
+  const _fCodSelVisible=_fCodSel&&_fCodSel.style.display!=='none';
+  filtros.cod=_fCodSelVisible?(_fCodSel.value||'').trim().toUpperCase():(document.getElementById('fCod').value||'').trim().toUpperCase();
+  filtros.auditor=(document.getElementById('fAuditor')||{value:''}).value;
+  filtros.supervisor=(document.getElementById('fSupervisor')||{value:''}).value;
+  filtros.audSup=(document.getElementById('fAudSup')||{value:''}).value;
+  filteredData=allData.filter(d=>{
+    if(filtros.marca&&d.marca!==filtros.marca)return false;
+    if(filtros.dep&&d.depto!==filtros.dep)return false;
+    if(filtros.fmt&&d.formato!==filtros.fmt)return false;
+    if(filtros.cod&&d.cod!==filtros.cod)return false;
+    if(filtros.desde&&d.fecha<filtros.desde)return false;
+    if(filtros.hasta&&d.fecha>filtros.hasta)return false;
+    if(filtros.auditor&&d.auditor!==filtros.auditor)return false;
+    if(filtros.audSup&&d.auditor!==filtros.audSup)return false;
+    if(filtros.supervisor&&d.supervisor!==filtros.supervisor)return false;
+    return true;
+  });
+  cachedAgg=computeAgg(filteredData);
+  tblPage=0;
+  actualizarKPIs();
+  actualizarCharts();
+  filtrarTabla();
+  actualizarPromedio();
+  actualizarLocalesPanel();
+}
+
+// datos filtrados incluyendo chartFiltros
+function getDisplayData(){
+  return filteredData.filter(d=>{
+    if(chartFiltros.depto&&d.depto!==chartFiltros.depto)return false;
+    if(chartFiltros.formato&&d.formato!==chartFiltros.formato)return false;
+    if(chartFiltros.fecha&&d.fecha!==chartFiltros.fecha)return false;
+    if(chartFiltros.cod&&d.cod!==chartFiltros.cod)return false;
+    if(chartFiltros.marca&&d.marca!==chartFiltros.marca)return false;
+    return true;
+  });
+}
+
+// ── FORMATOS ──
+function fmtM(n){if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(0);}
+function fmtS(n){return n.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+// ── KPIs ──
+function actualizarKPIs(){
+  const data=getDisplayData();
+  const vt=data.reduce((a,d)=>a+d.total,0);
+  const ve=data.reduce((a,d)=>a+d.eco,0);
+  const vm=data.reduce((a,d)=>a+d.meson,0);
+  const sv=data.reduce((a,d)=>a+d.stockVal,0);
+  const cs=data.reduce((a,d)=>a+d.stock,0);
+  const n=data.length;
+  document.getElementById('kVT').textContent='S/ '+fmtM(vt);
+  document.getElementById('kVTn').textContent=n+' registros';
+  document.getElementById('kVE').textContent='S/ '+fmtM(ve);
+  document.getElementById('kVEp').textContent=vt?((ve/vt*100).toFixed(1)+'% del total'):'—';
+  document.getElementById('kVM').textContent='S/ '+fmtM(vm);
+  document.getElementById('kVMp').textContent=vt?((vm/vt*100).toFixed(1)+'% del total'):'—';
+  document.getElementById('kSV').textContent='S/ '+fmtM(sv);
+  document.getElementById('kSVu').textContent=fmtM(cs)+' uds';
+  document.getElementById('kp0').textContent='S/ '+fmtM(vt);
+  document.getElementById('kp0s').textContent=n+' registros · '+[...new Set(data.map(d=>d.local))].length+' locales';
+  document.getElementById('kp1').textContent='S/ '+fmtM(ve);
+  document.getElementById('kp1s').textContent=vt?(ve/vt*100).toFixed(1)+'% del total':'—';
+  document.getElementById('kp2').textContent='S/ '+fmtM(vm);
+  document.getElementById('kp2s').textContent=vt?(vm/vt*100).toFixed(1)+'% del total':'—';
+  document.getElementById('kp3').textContent='S/ '+fmtM(sv);
+  document.getElementById('kp3s').textContent=fmtM(cs)+' unidades en stock';
+}
+
+// ── LOCALES PANEL ──
+function actualizarLocalesPanel(){
+  const panel=document.getElementById('localesPanel');
+  const chips=document.getElementById('localesChips');
+  const hayFiltro=filtros.cod||filtros.dep||filtros.fmt||filtros.marca||Object.values(chartFiltros).some(v=>v!==null);
+  if(!hayFiltro){panel.classList.remove('visible');return;}
+  panel.classList.add('visible');
+  const data=getDisplayData();
+  const locales=[...new Map(data.map(d=>[d.cod,d])).values()].sort((a,b)=>a.cod.localeCompare(b.cod));
+  if(!locales.length){chips.innerHTML='<span style="font-size:10px;color:var(--tx-d)">Sin resultados</span>';return;}
+  if(locales.length>5){
+    chips.innerHTML=`<div class="local-chip"><span class="lc-cod">${locales.length}</span><span>locales en cálculo</span></div>`;
+  } else {
+    chips.innerHTML=locales.map(d=>`<div class="local-chip"><span class="lc-cod">${d.cod}</span><span>${d.local}</span></div>`).join('');
+  }
+  // auditores
+  const audChips=document.getElementById('auditoresChips');
+  if(audChips){
+    const auds=[...new Set(data.map(d=>d.auditor).filter(Boolean))].sort();
+    audChips.innerHTML=auds.length
+      ?auds.map(a=>`<div class="local-chip lc-aud"><span>${a}</span></div>`).join('')
+      :'<span style="font-size:10px;color:var(--tx-d)">—</span>';
+  }
+  // supervisores
+  const supChips=document.getElementById('supervisoresChips');
+  if(supChips){
+    const sups=[...new Set(data.map(d=>d.supervisor).filter(Boolean))].sort();
+    supChips.innerHTML=sups.length
+      ?sups.map(s=>`<div class="local-chip lc-sup"><span>${s}</span></div>`).join('')
+      :'<span style="font-size:10px;color:var(--tx-d)">—</span>';
+  }
+}
+
+// ── CHART CONFIG ──
+function tipConfig(){return{backgroundColor:isDark?'#07111e':'#fff',borderColor:isDark?'rgba(255,255,255,.12)':'rgba(0,0,0,.1)',borderWidth:1,titleColor:isDark?'#F2F2F2':'#111D29',bodyColor:isDark?'rgba(242,242,242,.72)':'rgba(17,29,41,.7)',padding:10,cornerRadius:8,boxPadding:4};}
+function scalesConfig(){const tc=isDark?'rgba(242,242,242,.35)':'rgba(17,29,41,.45)';const gc=isDark?'rgba(255,255,255,.04)':'rgba(0,0,0,.05)';return{x:{ticks:{color:tc,font:{size:9}},grid:{color:gc}},y:{ticks:{color:tc,font:{size:9}},grid:{color:gc},beginAtZero:true}};}
+function getLegendColor(){return isDark?'rgba(242,242,242,.55)':'rgba(17,29,41,.55)';}
+
+// genera array de colores con el seleccionado resaltado
+function barColors(labels,selVal,hexFull,hexDim){
+  return labels.map(l=>l===selVal?hexFull:selVal?hexDim:hexFull);
+}
+
+// ── CHARTS ──
+function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});charts={};}
+
+function actualizarCharts(){
+  if(!cachedAgg) return;
+  // Si hay filtros de gráfico activos, re-agrega solo los datos visibles
+  const anyFilter=Object.values(chartFiltros).some(v=>v!==null);
+  const agg=anyFilter?computeAgg(getDisplayData()):cachedAgg;
+  const {byFecha,byDepto,byFormato,byMarca,byLocal}=agg;
+  const dimAlpha=0.2;
+  const fColors=[C.verde,C.purpura,C.azul,C.dorado,C.naranja,C.teal];
+
+  // ── Datos pre-agregados (O(k), sin iterar allData) ──
+  const fechas=[...byFecha.keys()].sort();
+  const fechaSel=chartFiltros.fecha;
+  const ptRadius=fechas.map(f=>f===fechaSel?6:2);
+  const evolTotal=fechas.map(f=>byFecha.get(f).total);
+  const evolEco=fechas.map(f=>byFecha.get(f).eco);
+  const evolMeson=fechas.map(f=>byFecha.get(f).meson);
+  const evolStockVal=fechas.map(f=>byFecha.get(f).stockVal);
+
+  const deptSel=chartFiltros.depto;
+  const depts=[...byDepto.keys()].sort((a,b)=>byDepto.get(b).total-byDepto.get(a).total);
+
+  const fmtSel=chartFiltros.formato;
+  const fmts=[...byFormato.keys()].sort((a,b)=>byFormato.get(b).total-byFormato.get(a).total);
+  const fmtTotal=[...byFormato.values()].reduce((s,v)=>s+v.total,0);
+
+  const marcaSel=chartFiltros.marca;
+  const marcas=[...byMarca.keys()].sort();
+
+  const codSel=chartFiltros.cod;
+  const top10=[...byLocal.entries()].sort((a,b)=>b[1].total-a[1].total).slice(0,10);
+  const top10Cods=top10.map(([,v])=>v.cod);
+  const top10Labels=top10.map(([k,v])=>{const n=k.length>15?k.substring(0,13)+'…':k;return`[${v.cod}] ${n}`;});
+
+  const sdDeps=[...byDepto.keys()].sort((a,b)=>byDepto.get(b).stockVal-byDepto.get(a).stockVal);
+  const sfFmts=[...byFormato.keys()].sort((a,b)=>byFormato.get(b).stock-byFormato.get(a).stock);
+
+  destroyCharts();
+  function mk(key,el,type,labels,datasets,options){
+    const canvas=document.getElementById(el);if(!canvas)return;
+    charts[key]=new Chart(canvas,{type,data:{labels,datasets},options});
+  }
+
+  // ── 1. Depts bar ──
+  mk('cDept','cDept','bar',depts,
+    [{label:'Venta Total',data:depts.map(d=>byDepto.get(d).total),
+      backgroundColor:depts.map(d=>d===deptSel?C.verde:deptSel?C.a(C.verde,dimAlpha):C.a(C.verde,.7)),
+      borderColor:C.verde,borderWidth:1.5,borderRadius:3}],
+    {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...tipConfig(),callbacks:{label:c=>'S/ '+fmtS(c.raw)}}},scales:scalesConfig(),
+     onClick:(e,els)=>{if(els.length)toggleChartFiltro('depto',depts[els[0].index]);}});
+
+  // ── 2. Formato donut ──
+  mk('cFmt','cFmt','doughnut',fmts,
+    [{data:fmts.map(f=>byFormato.get(f).total),
+      backgroundColor:fmts.map((f,i)=>f===fmtSel?fColors[i%fColors.length]:fmtSel?C.a(fColors[i%fColors.length],dimAlpha):fColors[i%fColors.length]),
+      borderWidth:2,borderColor:isDark?'#0B1520':'#fff'}],
+    {responsive:true,maintainAspectRatio:false,cutout:'60%',
+     plugins:{legend:{position:'bottom',labels:{color:getLegendColor(),font:{size:9},boxWidth:10,padding:8}},
+       tooltip:{...tipConfig(),callbacks:{label:c=>`${c.label}: S/ ${fmtS(c.raw)} (${fmtTotal?(c.raw/fmtTotal*100).toFixed(1):'0'}%)`}}},
+     onClick:(e,els)=>{if(els.length)toggleChartFiltro('formato',fmts[els[0].index]);}});
+
+  // ── 3. Evolución ventas ──
+  mk('cEvol','cEvol','line',fechas,[
+    {label:'Venta Total',data:evolTotal,borderColor:C.verde,backgroundColor:C.a(C.verde,.08),borderWidth:1.5,pointRadius:ptRadius,pointHoverRadius:5,tension:0.4,fill:true,pointBackgroundColor:fechas.map(f=>f===fechaSel?C.verde:'transparent'),pointBorderColor:C.verde},
+    {label:'Ecommerce',data:evolEco,borderColor:C.azul,backgroundColor:'transparent',borderWidth:1.5,pointRadius:ptRadius,pointHoverRadius:5,tension:0.4,pointBackgroundColor:fechas.map(f=>f===fechaSel?C.azul:'transparent'),pointBorderColor:C.azul},
+    {label:'Mesón',data:evolMeson,borderColor:C.dorado,backgroundColor:'transparent',borderWidth:1.5,pointRadius:ptRadius,pointHoverRadius:5,tension:0.4,pointBackgroundColor:fechas.map(f=>f===fechaSel?C.dorado:'transparent'),pointBorderColor:C.dorado}],
+    {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:getLegendColor(),font:{size:9},boxWidth:10}},tooltip:{...tipConfig(),callbacks:{label:c=>`${c.dataset.label}: S/ ${fmtS(c.raw)}`}}},scales:scalesConfig(),
+     onClick:(e,els)=>{if(els.length)toggleChartFiltro('fecha',fechas[els[0].index]);}});
+
+  // ── 4. Comparativa eco vs mesón ──
+  const cmpSel=chartFiltros.fecha;
+  mk('cCmp','cCmp','bar',fechas,[
+    {label:'Ecommerce',data:evolEco,backgroundColor:fechas.map(f=>f===cmpSel?C.azul:cmpSel?C.a(C.azul,dimAlpha):C.a(C.azul,.7)),borderColor:C.azul,borderWidth:1.5,borderRadius:3},
+    {label:'Mesón',data:evolMeson,backgroundColor:fechas.map(f=>f===cmpSel?C.dorado:cmpSel?C.a(C.dorado,dimAlpha):C.a(C.dorado,.7)),borderColor:C.dorado,borderWidth:1.5,borderRadius:3}],
+    {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:getLegendColor(),font:{size:9},boxWidth:10}},tooltip:{...tipConfig(),callbacks:{label:c=>`${c.dataset.label}: S/ ${fmtS(c.raw)}`}}},scales:scalesConfig(),
+     onClick:(e,els)=>{if(els.length)toggleChartFiltro('fecha',fechas[els[0].index]);}});
+
+  // ── 5. Top 10 locales ──
+  mk('cTop','cTop','bar',top10Labels,
+    [{label:'Venta Total',data:top10.map(([,v])=>v.total),
+      backgroundColor:top10Cods.map(c=>c===codSel?C.teal:codSel?C.a(C.teal,dimAlpha):C.a(C.teal,.7)),
+      borderColor:C.teal,borderWidth:1.5,borderRadius:3}],
+    {indexAxis:'y',responsive:true,maintainAspectRatio:false,
+     plugins:{legend:{display:false},tooltip:{...tipConfig(),callbacks:{title:items=>{const [k,v]=top10[items[0].dataIndex];return`[${v.cod}] ${k}`;},label:c=>'S/ '+fmtS(c.raw)}}},
+     scales:{x:{...scalesConfig().x},y:{...scalesConfig().y,grid:{display:false}}},
+     onClick:(e,els)=>{if(els.length)toggleChartFiltro('cod',top10Cods[els[0].index]);}});
+
+  // ── 6. Venta por marca ──
+  mk('cMarca','cMarca','bar',marcas,[
+    {label:'Ecommerce',data:marcas.map(m=>byMarca.get(m).eco),backgroundColor:marcas.map(m=>m===marcaSel?C.azul:marcaSel?C.a(C.azul,dimAlpha):C.a(C.azul,.7)),borderColor:C.azul,borderWidth:1.5,borderRadius:3},
+    {label:'Mesón',data:marcas.map(m=>byMarca.get(m).meson),backgroundColor:marcas.map(m=>m===marcaSel?C.dorado:marcaSel?C.a(C.dorado,dimAlpha):C.a(C.dorado,.7)),borderColor:C.dorado,borderWidth:1.5,borderRadius:3}],
+    {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:getLegendColor(),font:{size:9},boxWidth:10}},tooltip:{...tipConfig(),callbacks:{label:c=>`${c.dataset.label}: S/ ${fmtS(c.raw)}`}}},scales:scalesConfig(),
+     onClick:(e,els)=>{if(els.length)toggleChartFiltro('marca',marcas[els[0].index]);}});
+
+  // ── 6b. Evolución stock valorizado ──
+  mk('cEvolStock','cEvolStock','line',fechas,
+    [{label:'Stock Valorizado (S/)',data:evolStockVal,borderColor:C.purpura,backgroundColor:C.a(C.purpura,.08),borderWidth:1.5,pointRadius:ptRadius,pointHoverRadius:5,tension:0.4,fill:true,pointBackgroundColor:fechas.map(f=>f===fechaSel?C.purpura:'transparent'),pointBorderColor:C.purpura}],
+    {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:getLegendColor(),font:{size:9},boxWidth:10}},tooltip:{...tipConfig(),callbacks:{label:c=>`Stock Val.: S/ ${fmtS(c.raw)}`}}},scales:scalesConfig(),
+     onClick:(e,els)=>{if(els.length)toggleChartFiltro('fecha',fechas[els[0].index]);}});
+
+}
+
+// ── HOJA PROMEDIO ──
+let _promRows=[];
+let promPage=0;
+let promSort={col:'avgTotal',dir:'desc'};
+let _dpTimer;
+function _dp(){clearTimeout(_dpTimer);_dpTimer=setTimeout(actualizarPromedio,320);}
+
+function actualizarPromedio(){
+  const nDias=new Set(filteredData.map(d=>d.fecha)).size||1;
+  // agrupar por local
+  const map=new Map();
+  for(const d of filteredData){
+    let e=map.get(d.local);
+    if(!e){e={cod:d.cod,marca:d.marca,formato:d.formato,auditor:d.auditor||'',supervisor:d.supervisor||'',total:0,stockVal:0};map.set(d.local,e);}
+    e.total+=d.total;
+    e.stockVal+=d.stockVal;
+  }
+  const search=(document.getElementById('pSearch')||{}).value||'';
+  const q=search.toLowerCase();
+  _promRows=[...map.entries()]
+    .map(([local,v])=>({local,cod:v.cod,marca:v.marca,formato:v.formato,
+      auditor:v.auditor,supervisor:v.supervisor,
+      avgTotal:v.total/nDias, avgStock:v.stockVal/nDias}))
+    .filter(r=>!q||(r.local.toLowerCase().includes(q)||r.cod.toLowerCase().includes(q)));
+  _sortPromRows();
+  promPage=0;
+  document.getElementById('prom-info').textContent=
+    _promRows.length+' locales · '+nDias+' día'+(nDias!==1?'s':'');
+  renderPromedio();
+}
+
+function _sortPromRows(){
+  const m=promSort.dir==='desc'?-1:1;
+  _promRows.sort((a,b)=>{
+    if(promSort.col==='local')return a.local.localeCompare(b.local)*m;
+    return(a[promSort.col]-b[promSort.col])*m;
+  });
+  ['avgTotal','avgStock'].forEach(c=>{
+    const th=document.getElementById('pth-'+c);if(!th)return;
+    th.classList.remove('sort-asc','sort-desc');
+    if(c===promSort.col)th.classList.add(promSort.dir==='desc'?'sort-desc':'sort-asc');
+  });
+}
+
+function sortPromedio(col){
+  promSort=promSort.col===col?{col,dir:promSort.dir==='desc'?'asc':'desc'}:{col,dir:'desc'};
+  promPage=0;_sortPromRows();renderPromedio();
+}
+
+function renderPromedio(){
+  // aplicar orden desde select
+  const sv=document.getElementById('pSort');
+  if(sv&&!['avgTotal','avgStock'].includes(promSort.col)){
+    const[col,dir]=sv.value.split('-');
+    promSort={col,dir};_sortPromRows();
+  }
+  const total=_promRows.length;
+  const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+  if(promPage>=totalPages)promPage=totalPages-1;
+  const slice=_promRows.slice(promPage*PAGE_SIZE,(promPage+1)*PAGE_SIZE);
+  document.getElementById('tbPromedio').innerHTML=slice.length
+    ?slice.map(r=>`<tr>
+      <td>${r.cod}</td>
+      <td title="${r.local}">${r.local}</td>
+      <td>${badgeMarca(r.marca)}</td>
+      <td>${r.formato}</td>
+      <td class="tnum">S/ ${fmtS(r.avgTotal)}</td>
+      <td class="tnum">S/ ${fmtS(r.avgStock)}</td>
+      <td>${r.auditor||'—'}</td>
+      <td>${r.supervisor||'—'}</td>
+    </tr>`).join('')
+    :'<tr><td colspan="8" style="text-align:center;color:var(--tx-d);padding:20px">Sin resultados</td></tr>';
+  const prev=document.getElementById('prom-prev');
+  const next=document.getElementById('prom-next');
+  const info=document.getElementById('prom-page-info');
+  if(prev)prev.disabled=promPage===0;
+  if(next)next.disabled=promPage>=totalPages-1;
+  if(info)info.textContent=(promPage+1)+' / '+totalPages;
+}
+
+function goToPageProm(delta){
+  promPage+=delta;renderPromedio();
+  const el=document.querySelector('#tab2 .tc2-inner');if(el)el.scrollTop=0;
+}
+
+function limpiarFiltrosPromedio(){
+  const s=document.getElementById('pSearch');if(s)s.value='';
+  const sv=document.getElementById('pSort');if(sv)sv.value='avgTotal-desc';
+  promSort={col:'avgTotal',dir:'desc'};promPage=0;
+  actualizarPromedio();
+}
+
+// ── TABLA DETALLE ──
+let _tblRows=[];  // filas filtradas+ordenadas (cache para paginación)
+
+function filtrarTabla(){
+  const displayData=getDisplayData();
+  const search=(document.getElementById('tSearch').value||'').toLowerCase();
+  const dep=document.getElementById('tDep').value;
+  const fmt=document.getElementById('tFmt').value;
+  const marca=document.getElementById('tMarca').value;
+  const desde=document.getElementById('tDesde').value;
+  const hasta=document.getElementById('tHasta').value;
+  _tblRows=displayData.filter(d=>{
+    if(search&&!d.local.toLowerCase().includes(search)&&!d.cod.toLowerCase().includes(search))return false;
+    if(dep&&d.depto!==dep)return false;
+    if(fmt&&d.formato!==fmt)return false;
+    if(marca&&d.marca!==marca)return false;
+    if(desde&&d.fecha<desde)return false;
+    if(hasta&&d.fecha>hasta)return false;
+    return true;
+  });
+  if(tblSort.col){const m=tblSort.dir==='desc'?-1:1;_tblRows.sort((a,b)=>tblSort.col==='fecha'?a.fecha.localeCompare(b.fecha)*m:(a[tblSort.col]-b[tblSort.col])*m);}
+  renderTblPage();
+}
+
+function renderTblPage(){
+  const total=_tblRows.length;
+  const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+  if(tblPage>=totalPages)tblPage=totalPages-1;
+  const start=tblPage*PAGE_SIZE;
+  const slice=_tblRows.slice(start,start+PAGE_SIZE);
+  document.getElementById('tbl-count').textContent=
+    total+' registros · pág '+(tblPage+1)+' de '+totalPages;
+  document.getElementById('tbDetalle').innerHTML=slice.length
+    ?slice.map(d=>`<tr>
+      <td>${d.fecha}</td><td>${d.cod}</td><td title="${d.local}">${d.local}</td>
+      <td>${d.formato}</td><td>${badgeMarca(d.marca)}</td><td>${d.depto}</td>
+      <td class="tnum">S/ ${fmtS(d.eco)}</td><td class="tnum">S/ ${fmtS(d.meson)}</td>
+      <td class="tnum">S/ ${fmtS(d.total)}</td><td class="tnum">S/ ${fmtS(d.stockVal)}</td>
+      <td style="font-size:10px" title="${d.sku||''}">${d.sku||'—'}</td>
+      <td>${d.auditor||'—'}</td><td>${d.supervisor||'—'}</td>
+    </tr>`).join('')
+    :'<tr><td colspan="13" style="text-align:center;color:var(--tx-d);padding:20px">Sin resultados</td></tr>';
+  // controles de paginación
+  const prev=document.getElementById('tbl-prev');
+  const next=document.getElementById('tbl-next');
+  const info=document.getElementById('tbl-page-info');
+  if(prev)prev.disabled=tblPage===0;
+  if(next)next.disabled=tblPage>=totalPages-1;
+  if(info)info.textContent=(tblPage+1)+' / '+totalPages;
+}
+
+function goToPage(delta){
+  tblPage+=delta;
+  renderTblPage();
+  document.querySelector('.tc2-inner').scrollTop=0;
+}
+
+function badgeMarca(m){const cls=m==='INKAFARMA'?'badge-inka':m==='MIA'?'badge-mia':m==='MAX'?'badge-max':'badge-other';return `<span class="badge ${cls}">${m}</span>`;}
+
+// ── LIMPIAR FILTROS ──
+function limpiarTodosFiltros(){
+  // barra principal
+  filtros={marca:'',dep:'',fmt:'',cod:'',desde:'',hasta:'',auditor:'',supervisor:'',codAud:'',audSup:''};
+  chartFiltros={depto:null,formato:null,fecha:null,cod:null,marca:null};
+  ['fDesde','fHasta'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['fDep','fFmt','fAuditor','fSupervisor'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const fCodSel=document.getElementById('fCodSel');if(fCodSel){fCodSel.value='';fCodSel.style.display='none';}
+  ['fAudSup'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.style.display='none';}});
+  ['lblAudSup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const fCod=document.getElementById('fCod');if(fCod){fCod.value='';fCod.style.display='';}
+  document.querySelectorAll('.fbar .pbtn').forEach(b=>b.classList.remove('active'));
+  const btnTodos=document.querySelector('.fbar .pbtn[onclick*="marca\',\'\'"]');
+  if(btnTodos)btnTodos.classList.add('active');
+  // filtros de tabla detalle
+  limpiarFiltrosDetalle();
+  // repoblar fechas y re-renderizar
+  poblarSelectores();
+  aplicarFiltros();
+  actualizarCfilterBar();
+}
+function limpiarFiltrosDetalle(){
+  ['tSearch'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['tDep','tFmt','tMarca'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['tDesde','tHasta'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  tblSort={col:null,dir:'desc'};
+  tblPage=0;
+  ['eco','meson','total','stockVal'].forEach(c=>{const th=document.getElementById('th-'+c);if(th)th.classList.remove('sort-asc','sort-desc');});
+  filtrarTabla();
+}
+
+// ── SORT TABLA ──
+let tblSort={col:null,dir:'desc'};
+function sortTabla(col){
+  if(tblSort.col===col){tblSort.dir=tblSort.dir==='desc'?'asc':'desc';}
+  else{tblSort={col,dir:'desc'};}
+  tblPage=0;
+  ['fecha','eco','meson','total','stockVal'].forEach(c=>{
+    const th=document.getElementById('th-'+c);
+    if(!th)return;
+    th.classList.remove('sort-asc','sort-desc');
+    if(c===tblSort.col)th.classList.add(tblSort.dir==='desc'?'sort-desc':'sort-asc');
+  });
+  filtrarTabla();
+}
+
+// ── TABS ──
+function setTab(idx,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  for(let i=0;i<4;i++)document.getElementById('tab'+i).classList.toggle('hidden',i!==idx);
+}
+
+// ── TEMA ──
+function toggleTheme(){
+  isDark=!isDark;
+  document.body.className=isDark?'dark':'light';
+  document.getElementById('tlabel').textContent=isDark?'Modo claro':'Modo oscuro';
+  const icon=document.getElementById('ticon');
+  if(isDark){icon.innerHTML='<circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.5 4.5M11.5 11.5L12.6 12.6M3.4 12.6L4.5 11.5M11.5 4.5L12.6 3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>';}
+  else{icon.innerHTML='<path d="M12 3a6.364 6.364 0 1 0 9 9 5 5 0 1 1-9-9z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/>';}
+  setTimeout(actualizarCharts,60);
+}
+
+// ── CSV PARSER (RFC 4180, auto-detecta separador , o ;) ──
+function parseCSV(text){
+  // quitar BOM
+  if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  // detectar separador
+  const firstLine=text.split(/\r?\n/)[0];
+  const sep=firstLine.split(';').length>firstLine.split(',').length?';':',';
+  const rows=[];
+  let cur='', row=[], inQ=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(inQ){
+      if(ch==='"'&&text[i+1]==='"'){cur+='"';i++;}
+      else if(ch==='"'){inQ=false;}
+      else{cur+=ch;}
+    } else {
+      if(ch==='"'){inQ=true;}
+      else if(ch===sep){row.push(cur.trim());cur='';}
+      else if(ch==='\n'||ch==='\r'){
+        if(ch==='\r'&&text[i+1]==='\n')i++;
+        row.push(cur.trim());cur='';
+        if(row.some(c=>c!=''))rows.push(row);
+        row=[];
+      } else {cur+=ch;}
+    }
+  }
+  if(cur||row.length){row.push(cur.trim());if(row.some(c=>c!=''))rows.push(row);}
+  return rows;
+}
+
+// ── CSV UPLOAD ──
+function handleFile(file){
+  if(!file) return;
+  document.getElementById('uploadStatus').textContent='⏳ Cargando...';
+  leerConEncoding(file, 'UTF-8');
+}
+
+function leerConEncoding(file, enc){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    let newData=null;
+    try{
+      newData=parsearDatos(e.target.result);
+    } catch(err){
+      if(enc==='UTF-8'){
+        leerConEncoding(file,'latin1');
+      } else {
+        document.getElementById('uploadStatus').textContent='❌ Error al procesar';
+        alert('Error al leer CSV:\n'+err.message);
+      }
+      return;
+    }
+    // si llegamos aquí, el parseo fue OK → actualizar UI fuera del try-catch de parseo
+    try{
+      aplicarDatos(file.name, newData);
+    } catch(err){
+      document.getElementById('uploadStatus').textContent='❌ Error al renderizar';
+      alert('Error al renderizar:\n'+err.message);
+    }
+  };
+  reader.onerror=()=>{
+    document.getElementById('uploadStatus').textContent='❌ No se pudo leer';
+    alert('No se pudo abrir el archivo.');
+  };
+  reader.readAsText(file, enc);
+}
+
+// Solo parsea el texto y devuelve el array de datos; puede lanzar Error.
+function parsearDatos(text){
+  if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  const rows=parseCSV(text);
+  if(rows.length<2) throw new Error('Archivo vacío o sin filas de datos.');
+  const header=rows[0].map(h=>h.replace(/^"|"$/g,'').trim().toUpperCase());
+  const norm=s=>s.replace(/[\s_\-]/g,'');
+  const hNorm=header.map(norm);
+  const COLS={fecha:'FECHAVENTA',cod:'CODPOSU',local:'LOCAL',formato:'FORMATOLOCAL',
+    marca:'MARCA',depto:'DEPARTAMENTO',eco:'VENTAECOMMERCE',meson:'VENTAMESON',
+    total:'VENTATOTAL',stock:'CANTSTOCK',stockVal:'STOCKVAL'};
+  // columnas opcionales (no rompen si no están en el CSV)
+  const COLS_OPT={sku:'SKUMAYORVENTA',auditor:'AUDITOR',supervisor:'SUPERVISOR'};
+  const idx={};
+  for(const[key,name] of Object.entries(COLS)){
+    let i=hNorm.indexOf(norm(name));
+    if(i===-1) i=header.indexOf(name);
+    idx[key]=i;
+  }
+  for(const[key,name] of Object.entries(COLS_OPT)){
+    let i=hNorm.indexOf(norm(name));
+    if(i===-1) i=header.indexOf(name);
+    idx[key]=i; // puede ser -1 (columna ausente)
+  }
+  const missing=Object.entries(idx).filter(([k,v])=>v===-1&&k in COLS).map(([k])=>k);
+  if(missing.length){
+    throw new Error('Columnas no encontradas: '+missing.join(', ')
+      +'\n\nEncabezados detectados:\n'+header.join(' | '));
+  }
+  const newData=[];
+  for(let i=1;i<rows.length;i++){
+    const p=rows[i];
+    if(!p||p.every(c=>!c)) continue;
+    const get=j=>j===-1?'':(p[j]||'').replace(/^"|"$/g,'').trim();
+    const num=j=>parseFloat(get(j).replace(/,/g,'.'))||0;
+    newData.push({
+      fecha:get(idx.fecha).substring(0,10),
+      cod:get(idx.cod), local:get(idx.local),
+      formato:get(idx.formato), marca:get(idx.marca), depto:get(idx.depto),
+      eco:num(idx.eco), meson:num(idx.meson), total:num(idx.total),
+      stock:num(idx.stock), stockVal:num(idx.stockVal),
+      sku:get(idx.sku), auditor:get(idx.auditor), supervisor:get(idx.supervisor)
+    });
+  }
+  if(newData.length===0) throw new Error('No se encontraron filas con datos.');
+  return newData;
+}
+
+// Actualiza allData y refresca toda la UI con los nuevos datos.
+function aplicarDatos(nombre, newData){
+  allData=newData;
+  const inp=document.getElementById('csvInput');
+  if(inp) inp.value='';
+  document.getElementById('uploadStatus').textContent=
+    `● Cargado: ${nombre} (${allData.length} registros)`;
+  filtros={marca:'',dep:'',fmt:'',cod:'',desde:'',hasta:'',auditor:'',supervisor:''};
+  chartFiltros={depto:null,formato:null,fecha:null,cod:null,marca:null};
+  ['fDesde','fHasta','tDesde','tHasta'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.querySelectorAll('.fbar .pbtn').forEach(b=>b.classList.remove('active'));
+  const btnTodos=document.querySelector('.fbar .pbtn[onclick*="marca\',\'\'"]');
+  if(btnTodos) btnTodos.classList.add('active');
+  poblarSelectores();
+  aplicarFiltros();
+  actualizarCfilterBar();
+}
+
+function procesarCSV(nombre, text){
+  const newData=parsearDatos(text);
+  aplicarDatos(nombre, newData);
+}
+</script>
+</body>
+</html>
