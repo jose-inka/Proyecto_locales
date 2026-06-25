@@ -161,10 +161,11 @@ tbody tr:last-child td{border-bottom:none}
 .t-filters input,.t-filters select{padding:4px 8px;border-radius:6px;border:1px solid var(--inp-b);background:var(--inp-bg);color:var(--inp-c);font-size:10px;outline:none}
 .t-filters input:focus,.t-filters select:focus{border-color:#148E74}
 .badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:600;white-space:nowrap}
-.badge-inka{background:rgba(27,143,67,.15);color:#1B8F43}
+.badge-inka{background:rgba(34,139,34,.15);color:#1E7A1E}
+.badge-mifarma{background:rgba(230,81,0,.15);color:#C45000}
 .badge-mia{background:rgba(163,96,231,.15);color:#A360E7}
 .badge-max{background:rgba(10,88,140,.15);color:#0A588C}
-.badge-other{background:rgba(255,255,255,.1);color:var(--tx-m)}
+.badge-other{background:rgba(100,100,100,.12);color:var(--tx-m)}
 </style>
 </head>
 <body class="light" id="root">
@@ -1101,7 +1102,7 @@ function goToPage(delta){
   document.querySelector('.tc2-inner').scrollTop=0;
 }
 
-function badgeMarca(m){const cls=m==='INKAFARMA'?'badge-inka':m==='MIA'?'badge-mia':m==='MAX'?'badge-max':'badge-other';return `<span class="badge ${cls}">${m}</span>`;}
+function badgeMarca(m){const cls=m==='INKAFARMA'?'badge-inka':m==='MIFARMA'?'badge-mifarma':m==='MIA'?'badge-mia':m==='MAX'?'badge-max':'badge-other';return `<span class="badge ${cls}">${m}</span>`;}
 
 // ── LIMPIAR FILTROS ──
 function limpiarTodosFiltros(){
