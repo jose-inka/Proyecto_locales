@@ -167,7 +167,7 @@ tbody tr:last-child td{border-bottom:none}
 .badge-other{background:rgba(255,255,255,.1);color:var(--tx-m)}
 </style>
 </head>
-<body class="dark" id="root">
+<body class="light" id="root">
 <div class="dash">
 
 <!-- HEADER -->
@@ -208,6 +208,10 @@ tbody tr:last-child td{border-bottom:none}
   <span class="upload-info">Arrastra un CSV o haz clic — columnas: FECHA_VENTA, COD_POSU, LOCAL, FORMATO_LOCAL, MARCA, DEPARTAMENTO, VENTA_ECOMMERCE, VENTA_MESON, VENTA_TOTAL, CANT_STOCK, STOCK_VAL</span>
   <span class="upload-status" id="uploadStatus">● Datos demo cargados (100 registros)</span>
   <input type="file" id="csvInput" accept=".csv" onchange="handleFile(this.files[0])">
+  <button class="pbtn save-html-btn" id="saveHtmlBtn" onclick="guardarHTML()" title="Guardar dashboard con datos embebidos" style="margin-left:8px;display:none">
+    <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;vertical-align:middle;margin-right:4px"><path d="M3 13h10M8 3v7M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Guardar HTML
+  </button>
 </div>
 
 <!-- FILTER BAR -->
@@ -285,7 +289,6 @@ tbody tr:last-child td{border-bottom:none}
   <main class="main">
     <div class="tabs-bar">
       <div class="tab active" onclick="setTab(0,this)">Resumen</div>
-      <div class="tab" onclick="setTab(1,this)">Ventas</div>
       <div class="tab" onclick="setTab(2,this)">Promedio</div>
       <div class="tab" onclick="setTab(3,this)">Detalle</div>
     </div>
@@ -304,28 +307,6 @@ tbody tr:last-child td{border-bottom:none}
 
     <!-- TAB 0 RESUMEN -->
     <div class="tc" id="tab0">
-      <div class="kpi-row">
-        <div class="kpi-card" style="border-top-color:#1B8F43">
-          <div class="kpi-label">Venta Total</div>
-          <div class="kpi-value" id="kp0">—</div>
-          <div class="kpi-sub" id="kp0s">—</div>
-        </div>
-        <div class="kpi-card" style="border-top-color:#0A588C">
-          <div class="kpi-label">Venta Ecommerce</div>
-          <div class="kpi-value" id="kp1">—</div>
-          <div class="kpi-sub" id="kp1s">—</div>
-        </div>
-        <div class="kpi-card" style="border-top-color:#D7A91D">
-          <div class="kpi-label">Venta Mesón</div>
-          <div class="kpi-value" id="kp2">—</div>
-          <div class="kpi-sub" id="kp2s">—</div>
-        </div>
-        <div class="kpi-card" style="border-top-color:#A360E7">
-          <div class="kpi-label">Stock Valorizado</div>
-          <div class="kpi-value" id="kp3">—</div>
-          <div class="kpi-sub" id="kp3s">—</div>
-        </div>
-      </div>
       <div class="cc tall full interactive">
         <div class="ch">
           <div><div class="ct">Evolución de Ventas por Fecha</div><div class="cs">Ecommerce vs Mesón vs Total vs Stock Val.</div></div>
@@ -350,40 +331,21 @@ tbody tr:last-child td{border-bottom:none}
         </div>
         <div class="cc tall interactive">
           <div class="ch">
-            <div><div class="ct">Distribución por Formato Local</div><div class="cs">% Venta Total</div></div>
+            <div><div class="ct">Distribución por Marca</div><div class="cs">% Venta Total</div></div>
             <span class="chart-hint">Clic para filtrar</span>
           </div>
           <div class="chart-wrap"><canvas id="cFmt"></canvas></div>
         </div>
       </div>
-    </div>
-
-    <!-- TAB 1 VENTAS -->
-    <div class="tc hidden" id="tab1">
       <div class="cc tall full interactive">
         <div class="ch">
-          <div><div class="ct">Ecommerce vs Mesón por Fecha</div><div class="cs">Comparativa canal de venta</div></div>
+          <div><div class="ct">Top 10 Locales — Venta Total</div><div class="cs">Acumulado del período</div></div>
           <span class="chart-hint">Clic para filtrar</span>
         </div>
-        <div class="chart-wrap"><canvas id="cCmp"></canvas></div>
-      </div>
-      <div class="row2">
-        <div class="cc tall interactive">
-          <div class="ch">
-            <div><div class="ct">Top 10 Locales — Venta Total</div><div class="cs">Acumulado del período</div></div>
-            <span class="chart-hint">Clic para filtrar</span>
-          </div>
-          <div class="chart-wrap"><canvas id="cTop"></canvas></div>
-        </div>
-        <div class="cc tall interactive">
-          <div class="ch">
-            <div><div class="ct">Venta por Marca</div><div class="cs">Ecommerce vs Mesón</div></div>
-            <span class="chart-hint">Clic para filtrar</span>
-          </div>
-          <div class="chart-wrap"><canvas id="cMarca"></canvas></div>
-        </div>
+        <div class="chart-wrap"><canvas id="cTop0"></canvas></div>
       </div>
     </div>
+
 
     <!-- TAB 2 STOCK -->
     <div class="tc hidden" id="tab2">
@@ -394,25 +356,18 @@ tbody tr:last-child td{border-bottom:none}
             <div class="cs" id="prom-info">— locales · — días</div>
           </div>
         </div>
-        <div class="t-filters">
-          <input type="text" id="pSearch" placeholder="Buscar local o código..." oninput="_dp()">
-          <select id="pSort" onchange="renderPromedio()">
-            <option value="avgTotal-desc">Venta Prom. ↓</option>
-            <option value="avgTotal-asc">Venta Prom. ↑</option>
-            <option value="avgStock-desc">Stock Prom. ↓</option>
-            <option value="avgStock-asc">Stock Prom. ↑</option>
-            <option value="local-asc">Local A→Z</option>
-          </select>
-          <button class="pbtn clear-filtros-btn" onclick="limpiarFiltrosPromedio()">✕ Limpiar</button>
-        </div>
         <div class="tc2-inner">
           <table>
             <colgroup><col style="width:7%"><col style="width:25%"><col style="width:8%"><col style="width:9%"><col style="width:13%"><col style="width:13%"><col style="width:12%"><col style="width:13%"></colgroup>
             <thead><tr>
-              <th>Cód</th><th>Local</th><th>Marca</th><th>Formato</th>
+              <th class="sortable" id="pth-cod" onclick="sortPromedio('cod')">Cód</th>
+              <th class="sortable" id="pth-local" onclick="sortPromedio('local')">Local</th>
+              <th class="sortable" id="pth-marca" onclick="sortPromedio('marca')">Marca</th>
+              <th class="sortable" id="pth-formato" onclick="sortPromedio('formato')">Formato</th>
               <th class="tnum sortable" id="pth-avgTotal" onclick="sortPromedio('avgTotal')">Venta Prom./día</th>
               <th class="tnum sortable" id="pth-avgStock" onclick="sortPromedio('avgStock')">Stock Val. Prom./día</th>
-              <th>Auditor</th><th>Supervisor</th>
+              <th class="sortable" id="pth-auditor" onclick="sortPromedio('auditor')">Auditor</th>
+              <th class="sortable" id="pth-supervisor" onclick="sortPromedio('supervisor')">Supervisor</th>
             </tr></thead>
             <tbody id="tbPromedio"></tbody>
           </table>
@@ -442,8 +397,8 @@ tbody tr:last-child td{border-bottom:none}
         </div>
         <div class="tc2-inner">
           <table>
-            <colgroup><col style="width:9%"><col style="width:5%"><col style="width:12%"><col style="width:8%"><col style="width:6%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:16%"><col style="width:6%"><col style="width:7%"></colgroup>
-            <thead><tr><th class="sortable" id="th-fecha" onclick="sortTabla('fecha')">Fecha</th><th>Cód</th><th>Local</th><th>Formato</th><th>Marca</th><th>Depto.</th><th class="tnum sortable" id="th-eco" onclick="sortTabla('eco')">Ecommer.</th><th class="tnum sortable" id="th-meson" onclick="sortTabla('meson')">Mesón</th><th class="tnum sortable" id="th-total" onclick="sortTabla('total')">Total</th><th class="tnum sortable" id="th-stockVal" onclick="sortTabla('stockVal')">Stock Val.</th><th>SKU Mayor Venta</th><th>Auditor</th><th>Supervisor</th></tr></thead>
+            <colgroup><col style="width:9%"><col style="width:5%"><col style="width:12%"><col style="width:8%"><col style="width:6%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:10%"><col style="width:13%"><col style="width:6%"><col style="width:7%"></colgroup>
+            <thead><tr><th class="sortable" id="th-fecha" onclick="sortTabla('fecha')">Fecha</th><th class="sortable" id="th-cod" onclick="sortTabla('cod')">Cód</th><th class="sortable" id="th-local" onclick="sortTabla('local')">Local</th><th class="sortable" id="th-formato" onclick="sortTabla('formato')">Formato</th><th class="sortable" id="th-marca" onclick="sortTabla('marca')">Marca</th><th class="sortable" id="th-depto" onclick="sortTabla('depto')">Depto.</th><th class="tnum sortable" id="th-eco" onclick="sortTabla('eco')">Ecommer.</th><th class="tnum sortable" id="th-meson" onclick="sortTabla('meson')">Mesón</th><th class="tnum sortable" id="th-total" onclick="sortTabla('total')">Total</th><th class="tnum sortable" id="th-stockVal" onclick="sortTabla('stockVal')">Stock Val.</th><th class="sortable" id="th-sku" onclick="sortTabla('sku')">SKU Mayor Venta</th><th class="sortable" id="th-auditor" onclick="sortTabla('auditor')">Auditor</th><th class="sortable" id="th-supervisor" onclick="sortTabla('supervisor')">Supervisor</th></tr></thead>
             <tbody id="tbDetalle"></tbody>
           </table>
         </div>
@@ -572,12 +527,93 @@ const DEMO = [
 ["2026-06-04","FV6","DELIVERY CENTER CAPPA","DELIVERY CENTER","INKAFARMA","CALLAO",88148.14,0,88148.14,80478.86,2745298.58]
 ];
 
+// ── GOOGLE CLOUD STORAGE ──
+const GCS = {
+  bucket: 'b_auditoria',
+  object: 'priorizar_boticas.json',
+  client_email: 'python-farmacias-dev@pe-fps-plataformadedatos-dev.iam.gserviceaccount.com',
+  private_key: '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCdasxAQ4uQ3Phu\nvvXYdipcYURcGHbXO6DVMe4RncOrWT1Fa0K6rA5hfONrsRaa/rWrdMaosvlneMr1\nrk0POe01AEAXhlQG0VH3ju91KJG9C8sJ6UiiDneiyCN3MIPoqpXCzsMW0o1XVjV8\nAsBPZE0/KFs/Elr2zM5HGbInUt0/vgBNZ5en4R9PjmDdApdWrdZBtHgH7UON6TVg\nxP4nv8vb4B0XAv3Qbqz6j5vmPOjS5gH+A8FOHYmH8sCJP8tIEHwUjsGjYSfAqCQr\npkVPXLk2e5NFQbY5RaoU3SDsWlJmTdRHK5rtWTuJFjUgC/6bkBKhuxjXbFe2lSL0\nawJFBD61AgMBAAECggEAFpI6qThGKcZVZOPCsn/3APn9aEsltyTYodkf7qy1YrtP\n+sUvcz66bSYQId/pgt3kxKng1k2bT0fVqjaM3BMNPR1FE1pyb+vRmfKHyT/A7d9k\nBI7LmFkEtHWICE4Pi+vxv1YQSRR1qcE1uAtY8clK/jRWKQwDuQGSzkUT82mBSeNF\nyW6bI8KEDaSarL613QznyPAOhFMsXiEyBsF3SZWCabwv/8dqWx1/oyEWbesRkIAs\ngKou/aCYxnvsgbwHBE2KSqdU4mFcjZwcPurj8RkH1MDeMIgWk7yOwCLrMBetkSjC\nJEuRHuISs8IwF+dP0YMCNQkWiO++3ggkm1ytwEZpfQKBgQDXCFavNr22NaT4I1hl\n109h/6nxcz+K3mLt/jWV74Er9lyv0E3gRFcqwdEG+Zj9y3SCWKHnTttsiSy7OJhc\nb/eLiJhZwyLdWMwtajNYdAOgB0OnnB0jikmUibNHchZ3LJGnnEuzqYVREhARRUdM\niepCJT5b5cZFOEktG8nROHLpMwKBgQC7aGqaTMBcbdQmremnAIF+Jr+KkzdHRBBX\nPdnOTABLFU7bCcESQRi2z255Dg23OaGw4Meqw2rNjZ2JzkhxwAbjhPit874PluOt\ncdeJVuUE3gQbPi4o0rI+ObCAZL84glP9dFC7QXPQlsPH4W6IzQ4ibmUMcAUnnM7t\nD28rvO7IdwKBgEu7ExRoOg42/F+ryxEq8Dk6Wna/uQxGYB8jXWntzNdXz7LXsOWg\nC/byBZToSNpxUhop7vNQ0XR7JzbUqsw7XrpUpBtQ3zGHeXkxIt4vFavBgzE/iP+g\nT2Oxz2MFKiZUmwOlxv+CX4J60w/SD1dEZy1egoTI+rgcJ6FsXPqDX+0DAoGAFSqj\n761/hHD7Jys5Wp1aAs+JjrM16Rys482ejghTeCd98otVfSRREES5a37E2c7ujjW1\nF3pe07yM8IWV9RMFNClOlQcUjloyeOKEv4RK9ZPFzvXk7MNvUkvdvYKjflRp/BRp\nEd1AoWyFzEuP2m+eixEA5Li6PFEfpfK6UaxTI90CgYEA0sKpD7ZIcl0WKaFQYNuE\nxp2FgNAD09JujW/p4fu5izX2C3kXpc1qTCNyKeE8+bu48D8UcGQkPmkSzsXeMDTz\nPll94593ZvhuTxfuajY9ZcP/FYwL5FLeS8wTURmOt+j6O0GdDkTV1ol78yckRGm0\ntTaC/0iTLACkN3CECz1EoSw=\n-----END PRIVATE KEY-----\n'
+};
+
+function _b64u(s){return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');}
+function _b64uBuf(buf){return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');}
+
+async function gcsToken(){
+  const pem=GCS.private_key.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g,'');
+  const der=Uint8Array.from(atob(pem),c=>c.charCodeAt(0));
+  const key=await crypto.subtle.importKey('pkcs8',der.buffer,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);
+  const now=Math.floor(Date.now()/1000);
+  const hdr=_b64u(JSON.stringify({alg:'RS256',typ:'JWT'}));
+  const pay=_b64u(JSON.stringify({iss:GCS.client_email,scope:'https://www.googleapis.com/auth/devstorage.read_only',aud:'https://oauth2.googleapis.com/token',exp:now+3600,iat:now}));
+  const sig=await crypto.subtle.sign('RSASSA-PKCS1-v1_5',key,new TextEncoder().encode(`${hdr}.${pay}`));
+  const jwt=`${hdr}.${pay}.${_b64uBuf(sig)}`;
+  const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`});
+  const d=await r.json();
+  if(!d.access_token) throw new Error(d.error_description||'Token error');
+  return d.access_token;
+}
+
+async function cargarDesdeGCS(){
+  const st=document.getElementById('uploadStatus');
+  st.textContent='☁️ Conectando con GCS...';
+  try{
+    const token=await gcsToken();
+    st.textContent='☁️ Descargando datos...';
+    const url=`https://storage.googleapis.com/storage/v1/b/${GCS.bucket}/o/${encodeURIComponent(GCS.object)}?alt=media`;
+    const r=await fetch(url,{headers:{Authorization:`Bearer ${token}`}});
+    if(!r.ok){const e=await r.text();throw new Error(`HTTP ${r.status}: ${e.substring(0,300)}`);}
+    // Descomprimir gzip con DecompressionStream
+    st.textContent='☁️ Descomprimiendo...';
+    const ds=new DecompressionStream('gzip');
+    const decompressed=r.body.pipeThrough(ds);
+    const txt=await new Response(decompressed).text();
+    // Detectar formato
+    const trimmed=txt.trimStart();
+    let raw;
+    if(trimmed.startsWith('[')){
+      raw=JSON.parse(txt);
+    } else if(trimmed.startsWith('{')){
+      // JSONL: cada línea es un objeto JSON independiente
+      raw=txt.split('\n').filter(l=>l.trim()).map(l=>JSON.parse(l));
+    } else if(trimmed.startsWith('<')){
+      throw new Error('GCS devolvió XML. Verifica permisos y que el archivo existe.');
+    } else {
+      st.textContent='☁️ Parseando CSV...';
+      const data=parsearDatos(txt);
+      aplicarDatos(`GCS: ${GCS.bucket}/${GCS.object}`, data);
+      return;
+    }
+    if(!Array.isArray(raw)) raw=raw.data||raw.rows||Object.values(raw);
+    // Mapear array de objetos con nombres de columnas CSV al formato interno
+    const data=raw.map(row=>({
+      fecha:(row.FECHA_VENTA||row.fecha||'').substring(0,10),
+      cod:  row.COD_POSU   ||row.cod   ||'',
+      local:row.LOCAL      ||row.local  ||'',
+      formato:row.FORMATO_LOCAL||row.formato||'',
+      marca:row.MARCA      ||row.marca  ||'',
+      depto:row.DEPARTAMENTO||row.depto ||'',
+      eco:  +(row.VENTA_ECOMMERCE||row.eco  ||0),
+      meson:+(row.VENTA_MESON    ||row.meson||0),
+      total:+(row.VENTA_TOTAL    ||row.total||0),
+      stock:+(row.CANT_STOCK     ||row.stock||0),
+      stockVal:+(row.STOCK_VAL   ||row.stockVal||0),
+      sku:  row.sku_mayor_venta  ||row.sku  ||'',
+      auditor:row.Auditor        ||row.auditor||'',
+      supervisor:row.Supervisor  ||row.supervisor||''
+    }));
+    aplicarDatos(`GCS: ${GCS.bucket}/${GCS.object}`, data);
+  } catch(err){
+    st.textContent=`❌ Error GCS: ${err.message}`;
+    console.error('GCS error:',err);
+  }
+}
+
 // ── ESTADO ──
 let allData = DEMO.map(r=>({fecha:r[0],cod:r[1],local:r[2],formato:r[3],marca:r[4],depto:r[5],eco:+r[6],meson:+r[7],total:+r[8],stock:+r[9],stockVal:+r[10]}));
 let filtros = {marca:'',dep:'',fmt:'',cod:'',desde:'',hasta:'',auditor:'',supervisor:''};
 let chartFiltros = {depto:null,formato:null,fecha:null,cod:null,marca:null};
 let charts = {};
-let isDark = true;
+let isDark = false;
 let filteredData = [];
 let cachedAgg = null;   // agregaciones pre-computadas de filteredData
 const PAGE_SIZE = 500;  // filas por página en la tabla
@@ -597,6 +633,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   aplicarFiltros();
   document.getElementById('uploadBar').addEventListener('dragover',e=>{e.preventDefault();});
   document.getElementById('uploadBar').addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+  // Carga automática desde GCS al abrir
+  cargarDesdeGCS();
 });
 
 // ── SELECTORES ──
@@ -757,6 +795,7 @@ function getDisplayData(){
 
 // ── FORMATOS ──
 function fmtM(n){if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(0);}
+function fmtK(n){return Math.round(n).toLocaleString('es-PE');}
 function fmtS(n){return n.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
 // ── KPIs ──
@@ -768,22 +807,23 @@ function actualizarKPIs(){
   const sv=data.reduce((a,d)=>a+d.stockVal,0);
   const cs=data.reduce((a,d)=>a+d.stock,0);
   const n=data.length;
-  document.getElementById('kVT').textContent='S/ '+fmtM(vt);
+  document.getElementById('kVT').textContent='S/ '+fmtK(vt);
   document.getElementById('kVTn').textContent=n+' registros';
-  document.getElementById('kVE').textContent='S/ '+fmtM(ve);
+  document.getElementById('kVE').textContent='S/ '+fmtK(ve);
   document.getElementById('kVEp').textContent=vt?((ve/vt*100).toFixed(1)+'% del total'):'—';
-  document.getElementById('kVM').textContent='S/ '+fmtM(vm);
+  document.getElementById('kVM').textContent='S/ '+fmtK(vm);
   document.getElementById('kVMp').textContent=vt?((vm/vt*100).toFixed(1)+'% del total'):'—';
-  document.getElementById('kSV').textContent='S/ '+fmtM(sv);
+  document.getElementById('kSV').textContent='S/ '+fmtK(sv);
   document.getElementById('kSVu').textContent=fmtM(cs)+' uds';
-  document.getElementById('kp0').textContent='S/ '+fmtM(vt);
-  document.getElementById('kp0s').textContent=n+' registros · '+[...new Set(data.map(d=>d.local))].length+' locales';
-  document.getElementById('kp1').textContent='S/ '+fmtM(ve);
-  document.getElementById('kp1s').textContent=vt?(ve/vt*100).toFixed(1)+'% del total':'—';
-  document.getElementById('kp2').textContent='S/ '+fmtM(vm);
-  document.getElementById('kp2s').textContent=vt?(vm/vt*100).toFixed(1)+'% del total':'—';
-  document.getElementById('kp3').textContent='S/ '+fmtM(sv);
-  document.getElementById('kp3s').textContent=fmtM(cs)+' unidades en stock';
+  const _s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  _s('kp0','S/ '+fmtK(vt));
+  _s('kp0s',n+' registros · '+[...new Set(data.map(d=>d.local))].length+' locales');
+  _s('kp1','S/ '+fmtK(ve));
+  _s('kp1s',vt?(ve/vt*100).toFixed(1)+'% del total':'—');
+  _s('kp2','S/ '+fmtK(vm));
+  _s('kp2s',vt?(vm/vt*100).toFixed(1)+'% del total':'—');
+  _s('kp3','S/ '+fmtK(sv));
+  _s('kp3s',fmtK(cs)+' unidades en stock');
 }
 
 // ── LOCALES PANEL ──
@@ -882,15 +922,16 @@ function actualizarCharts(){
     {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...tipConfig(),callbacks:{label:c=>'S/ '+fmtS(c.raw)}}},scales:scalesConfig(),
      onClick:(e,els)=>{if(els.length)toggleChartFiltro('depto',depts[els[0].index]);}});
 
-  // ── 2. Formato donut ──
-  mk('cFmt','cFmt','doughnut',fmts,
-    [{data:fmts.map(f=>byFormato.get(f).total),
-      backgroundColor:fmts.map((f,i)=>f===fmtSel?fColors[i%fColors.length]:fmtSel?C.a(fColors[i%fColors.length],dimAlpha):fColors[i%fColors.length]),
+  // ── 2. Marca donut ──
+  const marcaTotal=[...byMarca.values()].reduce((s,v)=>s+v.eco+v.meson,0);
+  mk('cFmt','cFmt','doughnut',marcas,
+    [{data:marcas.map(m=>{const v=byMarca.get(m);return v.eco+v.meson;}),
+      backgroundColor:marcas.map((m,i)=>m===marcaSel?fColors[i%fColors.length]:marcaSel?C.a(fColors[i%fColors.length],dimAlpha):fColors[i%fColors.length]),
       borderWidth:2,borderColor:isDark?'#0B1520':'#fff'}],
     {responsive:true,maintainAspectRatio:false,cutout:'60%',
      plugins:{legend:{position:'bottom',labels:{color:getLegendColor(),font:{size:9},boxWidth:10,padding:8}},
-       tooltip:{...tipConfig(),callbacks:{label:c=>`${c.label}: S/ ${fmtS(c.raw)} (${fmtTotal?(c.raw/fmtTotal*100).toFixed(1):'0'}%)`}}},
-     onClick:(e,els)=>{if(els.length)toggleChartFiltro('formato',fmts[els[0].index]);}});
+       tooltip:{...tipConfig(),callbacks:{label:c=>`${c.label}: S/ ${fmtS(c.raw)} (${marcaTotal?(c.raw/marcaTotal*100).toFixed(1):'0'}%)`}}},
+     onClick:(e,els)=>{if(els.length)toggleChartFiltro('marca',marcas[els[0].index]);}});
 
   // ── 3. Evolución ventas ──
   mk('cEvol','cEvol','line',fechas,[
@@ -909,14 +950,15 @@ function actualizarCharts(){
      onClick:(e,els)=>{if(els.length)toggleChartFiltro('fecha',fechas[els[0].index]);}});
 
   // ── 5. Top 10 locales ──
-  mk('cTop','cTop','bar',top10Labels,
-    [{label:'Venta Total',data:top10.map(([,v])=>v.total),
-      backgroundColor:top10Cods.map(c=>c===codSel?C.teal:codSel?C.a(C.teal,dimAlpha):C.a(C.teal,.7)),
-      borderColor:C.teal,borderWidth:1.5,borderRadius:3}],
-    {indexAxis:'y',responsive:true,maintainAspectRatio:false,
+  const top10Opts={indexAxis:'y',responsive:true,maintainAspectRatio:false,
      plugins:{legend:{display:false},tooltip:{...tipConfig(),callbacks:{title:items=>{const [k,v]=top10[items[0].dataIndex];return`[${v.cod}] ${k}`;},label:c=>'S/ '+fmtS(c.raw)}}},
      scales:{x:{...scalesConfig().x},y:{...scalesConfig().y,grid:{display:false}}},
-     onClick:(e,els)=>{if(els.length)toggleChartFiltro('cod',top10Cods[els[0].index]);}});
+     onClick:(e,els)=>{if(els.length)toggleChartFiltro('cod',top10Cods[els[0].index]);}};
+  const top10Ds=[{label:'Venta Total',data:top10.map(([,v])=>v.total),
+      backgroundColor:top10Cods.map(c=>c===codSel?C.teal:codSel?C.a(C.teal,dimAlpha):C.a(C.teal,.7)),
+      borderColor:C.teal,borderWidth:1.5,borderRadius:3}];
+  mk('cTop','cTop','bar',top10Labels,top10Ds,top10Opts);
+  mk('cTop0','cTop0','bar',top10Labels,top10Ds,top10Opts);
 
   // ── 6. Venta por marca ──
   mk('cMarca','cMarca','bar',marcas,[
@@ -964,13 +1006,13 @@ function actualizarPromedio(){
   renderPromedio();
 }
 
+const _PROM_STR_COLS=new Set(['cod','local','marca','formato','auditor','supervisor']);
 function _sortPromRows(){
   const m=promSort.dir==='desc'?-1:1;
-  _promRows.sort((a,b)=>{
-    if(promSort.col==='local')return a.local.localeCompare(b.local)*m;
-    return(a[promSort.col]-b[promSort.col])*m;
-  });
-  ['avgTotal','avgStock'].forEach(c=>{
+  _promRows.sort((a,b)=>_PROM_STR_COLS.has(promSort.col)
+    ?(a[promSort.col]||'').localeCompare(b[promSort.col]||'')*m
+    :((a[promSort.col]||0)-(b[promSort.col]||0))*m);
+  ['cod','local','marca','formato','avgTotal','avgStock','auditor','supervisor'].forEach(c=>{
     const th=document.getElementById('pth-'+c);if(!th)return;
     th.classList.remove('sort-asc','sort-desc');
     if(c===promSort.col)th.classList.add(promSort.dir==='desc'?'sort-desc':'sort-asc');
@@ -983,12 +1025,6 @@ function sortPromedio(col){
 }
 
 function renderPromedio(){
-  // aplicar orden desde select
-  const sv=document.getElementById('pSort');
-  if(sv&&!['avgTotal','avgStock'].includes(promSort.col)){
-    const[col,dir]=sv.value.split('-');
-    promSort={col,dir};_sortPromRows();
-  }
   const total=_promRows.length;
   const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
   if(promPage>=totalPages)promPage=totalPages-1;
@@ -1045,7 +1081,8 @@ function filtrarTabla(){
     if(hasta&&d.fecha>hasta)return false;
     return true;
   });
-  if(tblSort.col){const m=tblSort.dir==='desc'?-1:1;_tblRows.sort((a,b)=>tblSort.col==='fecha'?a.fecha.localeCompare(b.fecha)*m:(a[tblSort.col]-b[tblSort.col])*m);}
+  const _TBL_STR=new Set(['fecha','cod','local','formato','marca','depto','sku','auditor','supervisor']);
+  if(tblSort.col){const m=tblSort.dir==='desc'?-1:1;_tblRows.sort((a,b)=>_TBL_STR.has(tblSort.col)?(a[tblSort.col]||'').localeCompare(b[tblSort.col]||'')*m:((a[tblSort.col]||0)-(b[tblSort.col]||0))*m);}
   renderTblPage();
 }
 
@@ -1111,7 +1148,7 @@ function limpiarFiltrosDetalle(){
   ['tDesde','tHasta'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   tblSort={col:null,dir:'desc'};
   tblPage=0;
-  ['eco','meson','total','stockVal'].forEach(c=>{const th=document.getElementById('th-'+c);if(th)th.classList.remove('sort-asc','sort-desc');});
+  ['fecha','cod','local','formato','marca','depto','eco','meson','total','stockVal','sku','auditor','supervisor'].forEach(c=>{const th=document.getElementById('th-'+c);if(th)th.classList.remove('sort-asc','sort-desc');});
   filtrarTabla();
 }
 
@@ -1121,7 +1158,7 @@ function sortTabla(col){
   if(tblSort.col===col){tblSort.dir=tblSort.dir==='desc'?'asc':'desc';}
   else{tblSort={col,dir:'desc'};}
   tblPage=0;
-  ['fecha','eco','meson','total','stockVal'].forEach(c=>{
+  ['fecha','cod','local','formato','marca','depto','eco','meson','total','stockVal','sku','auditor','supervisor'].forEach(c=>{
     const th=document.getElementById('th-'+c);
     if(!th)return;
     th.classList.remove('sort-asc','sort-desc');
@@ -1134,7 +1171,7 @@ function sortTabla(col){
 function setTab(idx,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  for(let i=0;i<4;i++)document.getElementById('tab'+i).classList.toggle('hidden',i!==idx);
+  for(let i=0;i<4;i++){const t=document.getElementById('tab'+i);if(t)t.classList.toggle('hidden',i!==idx);}
 }
 
 // ── TEMA ──
@@ -1270,6 +1307,8 @@ function aplicarDatos(nombre, newData){
   if(inp) inp.value='';
   document.getElementById('uploadStatus').textContent=
     `● Cargado: ${nombre} (${allData.length} registros)`;
+  const saveBtn=document.getElementById('saveHtmlBtn');
+  if(saveBtn) saveBtn.style.display='';
   filtros={marca:'',dep:'',fmt:'',cod:'',desde:'',hasta:'',auditor:'',supervisor:''};
   chartFiltros={depto:null,formato:null,fecha:null,cod:null,marca:null};
   ['fDesde','fHasta','tDesde','tHasta'].forEach(id=>{
@@ -1286,6 +1325,57 @@ function aplicarDatos(nombre, newData){
 function procesarCSV(nombre, text){
   const newData=parsearDatos(text);
   aplicarDatos(nombre, newData);
+}
+
+// ── GUARDAR HTML CON DATOS EMBEBIDOS ──
+function guardarHTML(){
+  const btn=document.getElementById('saveHtmlBtn');
+  const orig=btn.innerHTML;
+  btn.textContent='⏳ Preparando...';
+  btn.disabled=true;
+  // Usar setTimeout para que el navegador pueda renderizar el estado del botón antes de bloquear
+  setTimeout(()=>{
+    try{
+      // Serializar datos
+      const json=JSON.stringify(allData);
+      const mb=(new Blob([json]).size/1024/1024).toFixed(1);
+
+      // Tomar el HTML del DOM actual (no requiere fetch, funciona en file://)
+      let src=document.documentElement.outerHTML;
+
+      // Inyectar un bloque <script type="application/json"> con los datos antes de </head>
+      // Esto evita problemas de escapado de caracteres especiales en strings JS
+      const dataTag=`<script type="application/json" id="_data_embed">${json}<\/script>`;
+      src=src.replace('</head>', dataTag+'\n</head>');
+
+      // Reemplazar la inicialización DEMO con lectura del tag embebido
+      src=src.replace(
+        /\/\/ ── DATOS DEMO ──[\s\S]*?let allData\s*=\s*DEMO\.map\([^;]+\);/,
+        `// ── DATOS EMBEBIDOS (${allData.length} registros, ${mb} MB) ──\nlet allData=JSON.parse(document.getElementById('_data_embed').textContent);`
+      );
+
+      // Ocultar el botón Guardar en el archivo descargado
+      src=src.replace('id="saveHtmlBtn" style="display:none"','id="saveHtmlBtn" style="display:none"');
+      src=src.replace(/(<button[^>]*id="saveHtmlBtn"[^>]*)style=""/, '$1style="display:none"');
+
+      // Descargar
+      const blob=new Blob([src],{type:'text/html;charset=utf-8'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      const fecha=new Date().toISOString().slice(0,10);
+      a.download=`reporte_ventas_${fecha}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+      btn.innerHTML=orig;
+      btn.disabled=false;
+    } catch(err){
+      btn.textContent='❌ Error: '+err.message;
+      setTimeout(()=>{btn.innerHTML=orig;btn.disabled=false;},4000);
+      console.error('guardarHTML error:',err);
+    }
+  },50);
 }
 </script>
 </body>
