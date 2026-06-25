@@ -179,7 +179,7 @@ tbody tr:last-child td{border-bottom:none}
   </div>
   <div class="hr">
     <div class="h-dates">
-      <div class="h-upd"><span class="u-dot"></span>Datos al <strong>2026-06-06</strong></div>
+      <div class="h-upd"><span class="u-dot"></span>Datos al <strong id="hDataDate">—</strong></div>
       <span class="h-cur" id="hDate"></span>
     </div>
     <button class="tbtn" onclick="toggleTheme()">
@@ -199,28 +199,15 @@ tbody tr:last-child td{border-bottom:none}
   </div>
 </div>
 
-<!-- UPLOAD BAR -->
+<!-- STATUS BAR -->
 <div class="upload-bar" id="uploadBar">
-  <button class="upload-btn" onclick="document.getElementById('csvInput').click()">
-    <svg viewBox="0 0 16 16" fill="none"><path d="M8 10V3M5 6L8 3L11 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11V13H13V11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-    Subir CSV
-  </button>
-  <span class="upload-info">Arrastra un CSV o haz clic — columnas: FECHA_VENTA, COD_POSU, LOCAL, FORMATO_LOCAL, MARCA, DEPARTAMENTO, VENTA_ECOMMERCE, VENTA_MESON, VENTA_TOTAL, CANT_STOCK, STOCK_VAL</span>
   <span class="upload-status" id="uploadStatus">● Datos demo cargados (100 registros)</span>
-  <input type="file" id="csvInput" accept=".csv" onchange="handleFile(this.files[0])">
-  <button class="pbtn save-html-btn" id="saveHtmlBtn" onclick="guardarHTML()" title="Guardar dashboard con datos embebidos" style="margin-left:8px;display:none">
-    <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;vertical-align:middle;margin-right:4px"><path d="M3 13h10M8 3v7M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Guardar HTML
-  </button>
 </div>
 
 <!-- FILTER BAR -->
 <div class="fbar">
   <span class="fb-lbl">Marca</span>
-  <button class="pbtn active" onclick="setFiltro('marca','',this)">Todas</button>
-  <button class="pbtn" onclick="setFiltro('marca','INKAFARMA',this)">Inkafarma</button>
-  <button class="pbtn" onclick="setFiltro('marca','MIA',this)">Mia</button>
-  <button class="pbtn" onclick="setFiltro('marca','MAX',this)">Max</button>
+  <select class="pbtn" id="fMarca" onchange="setFiltro('marca',this.value,null)"><option value="">Todas</option></select>
   <div class="fb-sep"></div>
   <span class="fb-lbl">Depto.</span>
   <select class="pbtn" id="fDep" onchange="setFiltro('dep',this.value,null)"><option value="">Todos</option></select>
@@ -233,12 +220,10 @@ tbody tr:last-child td{border-bottom:none}
   <select class="pbtn" id="fCodSel" style="display:none" onchange="aplicarFiltros()"><option value="">Todos</option></select>
   <div class="fb-sep"></div>
   <span class="fb-lbl">Auditor</span>
-  <select class="pbtn" id="fAuditor" onchange="actualizarCascadas();aplicarFiltros()"><option value="">Todos</option></select>
+  <select class="pbtn" id="fAuditor" onchange="cascadaAuditor();aplicarFiltros()"><option value="">Todos</option></select>
   <div class="fb-sep"></div>
   <span class="fb-lbl">Supervisor</span>
-  <select class="pbtn" id="fSupervisor" onchange="actualizarCascadas();aplicarFiltros()"><option value="">Todos</option></select>
-  <span class="fb-lbl cascade-lbl" id="lblAudSup" style="display:none">Auditor</span>
-  <select class="pbtn" id="fAudSup" style="display:none" onchange="aplicarFiltros()"><option value="">Todos</option></select>
+  <select class="pbtn" id="fSupervisor" onchange="cascadaSupervisor();aplicarFiltros()"><option value="">Todos</option></select>
   <div class="fb-sep"></div>
   <span class="fb-lbl">Fechas</span>
   <div class="date-wrap">
@@ -385,15 +370,6 @@ tbody tr:last-child td{border-bottom:none}
       <div class="tc2">
         <div class="ch">
           <div><div class="ct">Tabla Detallada</div><div class="cs" id="tbl-count">— registros</div></div>
-        </div>
-        <div class="t-filters">
-          <input type="text" id="tSearch" placeholder="Buscar local..." oninput="_dt()">
-          <select id="tDep" onchange="filtrarTabla()"><option value="">Departamento</option></select>
-          <select id="tFmt" onchange="filtrarTabla()"><option value="">Formato</option></select>
-          <select id="tMarca" onchange="filtrarTabla()"><option value="">Marca</option></select>
-          <input type="date" id="tDesde" onchange="filtrarTabla()">
-          <input type="date" id="tHasta" onchange="filtrarTabla()">
-          <button class="pbtn clear-filtros-btn" onclick="limpiarFiltrosDetalle()" title="Limpiar filtros de esta tabla">✕ Limpiar</button>
         </div>
         <div class="tc2-inner">
           <table>
@@ -676,6 +652,7 @@ function poblarSelectores(){
   ['fDep','tDep'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const v=el.value;el.innerHTML='<option value="">Todos</option>'+deps.map(d=>`<option value="${d}">${d}</option>`).join('');el.value=v;});
   ['fFmt','tFmt'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const v=el.value;el.innerHTML='<option value="">Todos</option>'+fmts.map(f=>`<option value="${f}">${f}</option>`).join('');el.value=v;});
   const tMarca=document.getElementById('tMarca');if(tMarca)tMarca.innerHTML='<option value="">Marca</option>'+marcas.map(m=>`<option value="${m}">${m}</option>`).join('');
+  const fMarca=document.getElementById('fMarca');if(fMarca){const v=fMarca.value;fMarca.innerHTML='<option value="">Todas</option>'+marcas.map(m=>`<option value="${m}">${m}</option>`).join('');fMarca.value=v;}
   const fechas=allData.map(d=>d.fecha).sort();
   const minF=fechas[0],maxF=fechas[fechas.length-1];
   ['fDesde','tDesde'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=minF;});
@@ -721,10 +698,25 @@ function actualizarCfilterBar(){
 }
 
 // ── FILTROS CASCADA ──
-function actualizarCascadas(){
-  const audVal=(document.getElementById('fAuditor')||{value:''}).value;
+function cascadaSupervisor(){
   const supVal=(document.getElementById('fSupervisor')||{value:''}).value;
-  // Cód. Local por Auditor — usa el filtro existente fCod/fCodSel
+  const fAud=document.getElementById('fAuditor');
+  if(fAud){
+    if(supVal){
+      const auds=[...new Set(allData.filter(d=>d.supervisor===supVal&&d.auditor).map(d=>d.auditor))].sort();
+      fAud.innerHTML='<option value="">Todos</option>'+auds.map(a=>`<option value="${a}">${a}</option>`).join('');
+    } else {
+      const todosAuds=[...new Set(allData.map(d=>d.auditor).filter(Boolean))].sort();
+      fAud.innerHTML='<option value="">Todos</option>'+todosAuds.map(a=>`<option value="${a}">${a}</option>`).join('');
+    }
+    fAud.value='';
+  }
+  // Al cambiar supervisor, resetear también cód. local
+  cascadaAuditor();
+}
+
+function cascadaAuditor(){
+  const audVal=(document.getElementById('fAuditor')||{value:''}).value;
   const fCod=document.getElementById('fCod');
   const fCodSel=document.getElementById('fCodSel');
   if(fCodSel&&fCod){
@@ -733,18 +725,9 @@ function actualizarCascadas(){
       fCodSel.innerHTML='<option value="">Todos</option>'+cods.map(c=>`<option value="${c}">${c}</option>`).join('');
       fCodSel.value='';
       fCod.value='';fCod.style.display='none';fCodSel.style.display='';
-    } else {fCodSel.value='';fCodSel.style.display='none';fCod.style.display='';}
-  }
-  // Auditor por Supervisor
-  const fAudSup=document.getElementById('fAudSup');
-  const lblAudSup=document.getElementById('lblAudSup');
-  if(fAudSup&&lblAudSup){
-    if(supVal){
-      const auds=[...new Set(allData.filter(d=>d.supervisor===supVal&&d.auditor).map(d=>d.auditor))].sort();
-      fAudSup.innerHTML='<option value="">Todos</option>'+auds.map(a=>`<option value="${a}">${a}</option>`).join('');
-      fAudSup.value='';
-      fAudSup.style.display='';lblAudSup.style.display='';
-    } else {fAudSup.value='';fAudSup.style.display='none';lblAudSup.style.display='none';}
+    } else {
+      fCodSel.value='';fCodSel.style.display='none';fCod.style.display='';
+    }
   }
 }
 
@@ -759,7 +742,6 @@ function aplicarFiltros(){
   filtros.cod=_fCodSelVisible?(_fCodSel.value||'').trim().toUpperCase():(document.getElementById('fCod').value||'').trim().toUpperCase();
   filtros.auditor=(document.getElementById('fAuditor')||{value:''}).value;
   filtros.supervisor=(document.getElementById('fSupervisor')||{value:''}).value;
-  filtros.audSup=(document.getElementById('fAudSup')||{value:''}).value;
   filteredData=allData.filter(d=>{
     if(filtros.marca&&d.marca!==filtros.marca)return false;
     if(filtros.dep&&d.depto!==filtros.dep)return false;
@@ -768,7 +750,6 @@ function aplicarFiltros(){
     if(filtros.desde&&d.fecha<filtros.desde)return false;
     if(filtros.hasta&&d.fecha>filtros.hasta)return false;
     if(filtros.auditor&&d.auditor!==filtros.auditor)return false;
-    if(filtros.audSup&&d.auditor!==filtros.audSup)return false;
     if(filtros.supervisor&&d.supervisor!==filtros.supervisor)return false;
     return true;
   });
@@ -1066,12 +1047,13 @@ let _tblRows=[];  // filas filtradas+ordenadas (cache para paginación)
 
 function filtrarTabla(){
   const displayData=getDisplayData();
-  const search=(document.getElementById('tSearch').value||'').toLowerCase();
-  const dep=document.getElementById('tDep').value;
-  const fmt=document.getElementById('tFmt').value;
-  const marca=document.getElementById('tMarca').value;
-  const desde=document.getElementById('tDesde').value;
-  const hasta=document.getElementById('tHasta').value;
+  const _g=(id)=>{const e=document.getElementById(id);return e?e.value:'';};
+  const search=_g('tSearch').toLowerCase();
+  const dep=_g('tDep');
+  const fmt=_g('tFmt');
+  const marca=_g('tMarca');
+  const desde=_g('tDesde');
+  const hasta=_g('tHasta');
   _tblRows=displayData.filter(d=>{
     if(search&&!d.local.toLowerCase().includes(search)&&!d.cod.toLowerCase().includes(search))return false;
     if(dep&&d.depto!==dep)return false;
@@ -1124,17 +1106,13 @@ function badgeMarca(m){const cls=m==='INKAFARMA'?'badge-inka':m==='MIA'?'badge-m
 // ── LIMPIAR FILTROS ──
 function limpiarTodosFiltros(){
   // barra principal
-  filtros={marca:'',dep:'',fmt:'',cod:'',desde:'',hasta:'',auditor:'',supervisor:'',codAud:'',audSup:''};
+  filtros={marca:'',dep:'',fmt:'',cod:'',desde:'',hasta:'',auditor:'',supervisor:'',codAud:''};
   chartFiltros={depto:null,formato:null,fecha:null,cod:null,marca:null};
   ['fDesde','fHasta'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['fDep','fFmt','fAuditor','fSupervisor'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const fCodSel=document.getElementById('fCodSel');if(fCodSel){fCodSel.value='';fCodSel.style.display='none';}
-  ['fAudSup'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.style.display='none';}});
-  ['lblAudSup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   const fCod=document.getElementById('fCod');if(fCod){fCod.value='';fCod.style.display='';}
-  document.querySelectorAll('.fbar .pbtn').forEach(b=>b.classList.remove('active'));
-  const btnTodos=document.querySelector('.fbar .pbtn[onclick*="marca\',\'\'"]');
-  if(btnTodos)btnTodos.classList.add('active');
+  const fMarcaEl=document.getElementById('fMarca');if(fMarcaEl)fMarcaEl.value='';
   // filtros de tabla detalle
   limpiarFiltrosDetalle();
   // repoblar fechas y re-renderizar
@@ -1307,8 +1285,9 @@ function aplicarDatos(nombre, newData){
   if(inp) inp.value='';
   document.getElementById('uploadStatus').textContent=
     `● Cargado: ${nombre} (${allData.length} registros)`;
-  const saveBtn=document.getElementById('saveHtmlBtn');
-  if(saveBtn) saveBtn.style.display='';
+  const maxFecha=allData.reduce((m,d)=>d.fecha>m?d.fecha:m,'');
+  const elFecha=document.getElementById('hDataDate');
+  if(elFecha&&maxFecha) elFecha.textContent=maxFecha;
   filtros={marca:'',dep:'',fmt:'',cod:'',desde:'',hasta:'',auditor:'',supervisor:''};
   chartFiltros={depto:null,formato:null,fecha:null,cod:null,marca:null};
   ['fDesde','fHasta','tDesde','tHasta'].forEach(id=>{
@@ -1327,56 +1306,6 @@ function procesarCSV(nombre, text){
   aplicarDatos(nombre, newData);
 }
 
-// ── GUARDAR HTML CON DATOS EMBEBIDOS ──
-function guardarHTML(){
-  const btn=document.getElementById('saveHtmlBtn');
-  const orig=btn.innerHTML;
-  btn.textContent='⏳ Preparando...';
-  btn.disabled=true;
-  // Usar setTimeout para que el navegador pueda renderizar el estado del botón antes de bloquear
-  setTimeout(()=>{
-    try{
-      // Serializar datos
-      const json=JSON.stringify(allData);
-      const mb=(new Blob([json]).size/1024/1024).toFixed(1);
-
-      // Tomar el HTML del DOM actual (no requiere fetch, funciona en file://)
-      let src=document.documentElement.outerHTML;
-
-      // Inyectar un bloque <script type="application/json"> con los datos antes de </head>
-      // Esto evita problemas de escapado de caracteres especiales en strings JS
-      const dataTag=`<script type="application/json" id="_data_embed">${json}<\/script>`;
-      src=src.replace('</head>', dataTag+'\n</head>');
-
-      // Reemplazar la inicialización DEMO con lectura del tag embebido
-      src=src.replace(
-        /\/\/ ── DATOS DEMO ──[\s\S]*?let allData\s*=\s*DEMO\.map\([^;]+\);/,
-        `// ── DATOS EMBEBIDOS (${allData.length} registros, ${mb} MB) ──\nlet allData=JSON.parse(document.getElementById('_data_embed').textContent);`
-      );
-
-      // Ocultar el botón Guardar en el archivo descargado
-      src=src.replace('id="saveHtmlBtn" style="display:none"','id="saveHtmlBtn" style="display:none"');
-      src=src.replace(/(<button[^>]*id="saveHtmlBtn"[^>]*)style=""/, '$1style="display:none"');
-
-      // Descargar
-      const blob=new Blob([src],{type:'text/html;charset=utf-8'});
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);
-      const fecha=new Date().toISOString().slice(0,10);
-      a.download=`reporte_ventas_${fecha}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(()=>URL.revokeObjectURL(a.href),10000);
-      btn.innerHTML=orig;
-      btn.disabled=false;
-    } catch(err){
-      btn.textContent='❌ Error: '+err.message;
-      setTimeout(()=>{btn.innerHTML=orig;btn.disabled=false;},4000);
-      console.error('guardarHTML error:',err);
-    }
-  },50);
-}
 </script>
 </body>
 </html>
