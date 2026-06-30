@@ -207,6 +207,14 @@ tbody tr:last-child td{border-bottom:none}
 
 <!-- FILTER BAR -->
 <div class="fbar">
+  <span class="fb-lbl">Tipo Venta</span>
+  <select class="pbtn" id="fTipoVenta" onchange="aplicarFiltros()">
+    <option value="">Todos</option>
+    <option value="total">Venta Total</option>
+    <option value="eco">Venta Ecommerce</option>
+    <option value="meson">Mesón</option>
+  </select>
+  <div class="fb-sep"></div>
   <span class="fb-lbl">Marca</span>
   <select class="pbtn" id="fMarca" onchange="setFiltro('marca',this.value,null)"><option value="">Todas</option></select>
   <div class="fb-sep"></div>
@@ -277,6 +285,7 @@ tbody tr:last-child td{border-bottom:none}
       <div class="tab active" onclick="setTab(0,this)">Resumen</div>
       <div class="tab" onclick="setTab(2,this)">Promedio</div>
       <div class="tab" onclick="setTab(3,this)">Detalle</div>
+      <div class="tab" onclick="setTab(4,this)">Top Ventas</div>
     </div>
 
     <!-- LOCALES PANEL (persistente en todas las pestañas) -->
@@ -366,6 +375,44 @@ tbody tr:last-child td{border-bottom:none}
       </div>
     </div>
 
+    <!-- TAB 4 TOP VENTAS -->
+    <div class="tc hidden" id="tab4">
+      <div class="tc2">
+        <div class="ch">
+          <div>
+            <div class="ct">Top Ventas por Local y Día</div>
+            <div class="cs" id="tv-count">— registros</div>
+          </div>
+        </div>
+        <div class="tc2-inner">
+          <table>
+            <colgroup>
+              <col style="width:9%"><col style="width:6%"><col style="width:16%">
+              <col style="width:7%"><col style="width:8%"><col style="width:21%">
+              <col style="width:11%"><col style="width:11%"><col style="width:11%">
+            </colgroup>
+            <thead><tr>
+              <th class="sortable" id="tvth-fecha" onclick="sortTopVentas('fecha')">Fecha</th>
+              <th class="sortable" id="tvth-cod" onclick="sortTopVentas('cod')">Cód</th>
+              <th class="sortable" id="tvth-local" onclick="sortTopVentas('local')">Local</th>
+              <th class="sortable" id="tvth-marca" onclick="sortTopVentas('marca')">Marca</th>
+              <th class="sortable" id="tvth-formato" onclick="sortTopVentas('formato')">Formato</th>
+              <th class="sortable" id="tvth-sku" onclick="sortTopVentas('sku')">SKU Mayor Venta</th>
+              <th class="tnum sortable" id="tvth-cantUnd" onclick="sortTopVentas('cantUnd')">Cant. Unidades</th>
+              <th class="tnum sortable" id="tvth-importeSku" onclick="sortTopVentas('importeSku')">Importe SKU Top</th>
+              <th class="sortable" id="tvth-auditor" onclick="sortTopVentas('auditor')">Auditor</th>
+            </tr></thead>
+            <tbody id="tbTopVentas"></tbody>
+          </table>
+        </div>
+        <div class="tbl-pagination">
+          <button class="pbtn" id="tv-prev" onclick="goToPageTV(-1)" disabled>&#8592; Anterior</button>
+          <span class="tbl-page-info" id="tv-page-info">1 / 1</span>
+          <button class="pbtn" id="tv-next" onclick="goToPageTV(1)" disabled>Siguiente &#8594;</button>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 3 DETALLE -->
     <div class="tc hidden" id="tab3">
       <div class="tc2">
@@ -374,8 +421,8 @@ tbody tr:last-child td{border-bottom:none}
         </div>
         <div class="tc2-inner">
           <table>
-            <colgroup><col style="width:9%"><col style="width:5%"><col style="width:12%"><col style="width:8%"><col style="width:6%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:10%"><col style="width:13%"><col style="width:6%"><col style="width:7%"></colgroup>
-            <thead><tr><th class="sortable" id="th-fecha" onclick="sortTabla('fecha')">Fecha</th><th class="sortable" id="th-cod" onclick="sortTabla('cod')">Cód</th><th class="sortable" id="th-local" onclick="sortTabla('local')">Local</th><th class="sortable" id="th-formato" onclick="sortTabla('formato')">Formato</th><th class="sortable" id="th-marca" onclick="sortTabla('marca')">Marca</th><th class="sortable" id="th-depto" onclick="sortTabla('depto')">Depto.</th><th class="tnum sortable" id="th-eco" onclick="sortTabla('eco')">Ecommer.</th><th class="tnum sortable" id="th-meson" onclick="sortTabla('meson')">Mesón</th><th class="tnum sortable" id="th-total" onclick="sortTabla('total')">Total</th><th class="tnum sortable" id="th-stockVal" onclick="sortTabla('stockVal')">Stock Val.</th><th class="sortable" id="th-sku" onclick="sortTabla('sku')">SKU Mayor Venta</th><th class="sortable" id="th-auditor" onclick="sortTabla('auditor')">Auditor</th><th class="sortable" id="th-supervisor" onclick="sortTabla('supervisor')">Supervisor</th></tr></thead>
+            <colgroup><col style="width:9%"><col style="width:6%"><col style="width:14%"><col style="width:9%"><col style="width:7%"><col style="width:8%"><col style="width:8%"><col style="width:8%"><col style="width:8%"><col style="width:11%"><col style="width:7%"><col style="width:8%"></colgroup>
+            <thead><tr><th class="sortable" id="th-fecha" onclick="sortTabla('fecha')">Fecha</th><th class="sortable" id="th-cod" onclick="sortTabla('cod')">Cód</th><th class="sortable" id="th-local" onclick="sortTabla('local')">Local</th><th class="sortable" id="th-formato" onclick="sortTabla('formato')">Formato</th><th class="sortable" id="th-marca" onclick="sortTabla('marca')">Marca</th><th class="sortable" id="th-depto" onclick="sortTabla('depto')">Depto.</th><th class="tnum sortable" id="th-eco" onclick="sortTabla('eco')">Ecommer.</th><th class="tnum sortable" id="th-meson" onclick="sortTabla('meson')">Mesón</th><th class="tnum sortable" id="th-total" onclick="sortTabla('total')">Total</th><th class="tnum sortable" id="th-stockVal" onclick="sortTabla('stockVal')">Stock Val.</th><th class="sortable" id="th-auditor" onclick="sortTabla('auditor')">Auditor</th><th class="sortable" id="th-supervisor" onclick="sortTabla('supervisor')">Supervisor</th></tr></thead>
             <tbody id="tbDetalle"></tbody>
           </table>
         </div>
@@ -539,11 +586,19 @@ async function cargarDesdeGCS(){
     const url=`https://storage.googleapis.com/storage/v1/b/${GCS.bucket}/o/${encodeURIComponent(GCS.object)}?alt=media`;
     const r=await fetch(url,{headers:{Authorization:`Bearer ${token}`}});
     if(!r.ok){const e=await r.text();throw new Error(`HTTP ${r.status}: ${e.substring(0,300)}`);}
-    // Descomprimir gzip con DecompressionStream
-    st.textContent='☁️ Descomprimiendo...';
-    const ds=new DecompressionStream('gzip');
-    const decompressed=r.body.pipeThrough(ds);
-    const txt=await new Response(decompressed).text();
+    // Leer bytes crudos para detectar si es gzip (magic bytes 1f 8b)
+    st.textContent='☁️ Leyendo datos...';
+    const bytes=await r.arrayBuffer();
+    const view=new Uint8Array(bytes);
+    let txt;
+    if(view[0]===0x1f&&view[1]===0x8b){
+      st.textContent='☁️ Descomprimiendo...';
+      const ds=new DecompressionStream('gzip');
+      const decompressed=new Blob([bytes]).stream().pipeThrough(ds);
+      txt=await new Response(decompressed).text();
+    } else {
+      txt=new TextDecoder().decode(view);
+    }
     // Detectar formato
     const trimmed=txt.trimStart();
     let raw;
@@ -561,6 +616,8 @@ async function cargarDesdeGCS(){
       return;
     }
     if(!Array.isArray(raw)) raw=raw.data||raw.rows||Object.values(raw);
+    // DEBUG: mostrar columnas del primer registro en consola
+    if(raw.length>0) console.log('🔑 Columnas GCS:', Object.keys(raw[0]), '| Primer registro:', raw[0]);
     // Mapear array de objetos con nombres de columnas CSV al formato interno
     const data=raw.map(row=>({
       fecha:(row.FECHA_VENTA||row.fecha||'').substring(0,10),
@@ -575,6 +632,8 @@ async function cargarDesdeGCS(){
       stock:+(row.CANT_STOCK     ||row.stock||0),
       stockVal:+(row.STOCK_VAL   ||row.stockVal||0),
       sku:  row.sku_mayor_venta  ||row.sku  ||'',
+      cantUnd:+(row.CANT_UNIDADES||row.cant_unidades||row.Cant_Unidades||row.cantUnd||0),
+      importeSku:+(row.IMPORTE_SKU_TOP||row.importe_sku_top||row.Importe_Sku_Top||row.importeSku||0),
       auditor:row.Auditor        ||row.auditor||'',
       supervisor:row.Supervisor  ||row.supervisor||''
     }));
@@ -606,11 +665,11 @@ const C = {
 // ── INIT ──
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('hDate').textContent=new Date().toLocaleDateString('es-PE',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-  poblarSelectores();
-  aplicarFiltros();
+  try{poblarSelectores();}catch(e){console.error('poblarSelectores:',e);}
+  try{aplicarFiltros();}catch(e){console.error('aplicarFiltros init:',e);}
   document.getElementById('uploadBar').addEventListener('dragover',e=>{e.preventDefault();});
   document.getElementById('uploadBar').addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
-  // Carga automática desde GCS al abrir
+  // Carga automática desde GCS al abrir — siempre se ejecuta
   cargarDesdeGCS();
 });
 
@@ -640,8 +699,8 @@ function computeAgg(data){
     m.eco+=d.eco;m.meson+=d.meson;
 
     let loc=byLocal.get(d.local);
-    if(!loc){loc={total:0,cod:d.cod,auditor:d.auditor||'',supervisor:d.supervisor||''};byLocal.set(d.local,loc);}
-    loc.total+=d.total;
+    if(!loc){loc={total:0,eco:0,meson:0,cod:d.cod,auditor:d.auditor||'',supervisor:d.supervisor||''};byLocal.set(d.local,loc);}
+    loc.total+=d.total;loc.eco+=d.eco;loc.meson+=d.meson;
   }
   return{byFecha,byDepto,byFormato,byMarca,byLocal};
 }
@@ -743,6 +802,7 @@ function aplicarFiltros(){
   filtros.cod=_fCodSelVisible?(_fCodSel.value||'').trim().toUpperCase():(document.getElementById('fCod').value||'').trim().toUpperCase();
   filtros.auditor=(document.getElementById('fAuditor')||{value:''}).value;
   filtros.supervisor=(document.getElementById('fSupervisor')||{value:''}).value;
+  filtros.tipoVenta=(document.getElementById('fTipoVenta')||{value:''}).value;
   filteredData=allData.filter(d=>{
     if(filtros.marca&&d.marca!==filtros.marca)return false;
     if(filtros.dep&&d.depto!==filtros.dep)return false;
@@ -752,6 +812,9 @@ function aplicarFiltros(){
     if(filtros.hasta&&d.fecha>filtros.hasta)return false;
     if(filtros.auditor&&d.auditor!==filtros.auditor)return false;
     if(filtros.supervisor&&d.supervisor!==filtros.supervisor)return false;
+    if(filtros.tipoVenta==='eco'&&!(d.eco>0))return false;
+    if(filtros.tipoVenta==='meson'&&!(d.meson>0))return false;
+    if(filtros.tipoVenta==='total'&&!(d.total>0))return false;
     return true;
   });
   cachedAgg=computeAgg(filteredData);
@@ -760,6 +823,7 @@ function aplicarFiltros(){
   actualizarCharts();
   filtrarTabla();
   actualizarPromedio();
+  actualizarTopVentas();
   actualizarLocalesPanel();
 }
 
@@ -883,7 +947,10 @@ function actualizarCharts(){
   const marcas=[...byMarca.keys()].sort();
 
   const codSel=chartFiltros.cod;
-  const top10=[...byLocal.entries()].sort((a,b)=>b[1].total-a[1].total).slice(0,10);
+  const _tv=filtros.tipoVenta||'';
+  const _met=_tv==='eco'?'eco':_tv==='meson'?'meson':'total';
+  const _metLabel=_tv==='eco'?'Venta Ecommerce':_tv==='meson'?'Mesón':'Venta Total';
+  const top10=[...byLocal.entries()].sort((a,b)=>b[1][_met]-a[1][_met]).slice(0,10);
   const top10Cods=top10.map(([,v])=>v.cod);
   const top10Labels=top10.map(([k,v])=>{const n=k.length>15?k.substring(0,13)+'…':k;return`[${v.cod}] ${n}`;});
 
@@ -916,10 +983,11 @@ function actualizarCharts(){
      onClick:(e,els)=>{if(els.length)toggleChartFiltro('marca',marcas[els[0].index]);}});
 
   // ── 3. Evolución ventas ──
-  mk('cEvol','cEvol','line',fechas,[
-    {label:'Venta Total',data:evolTotal,borderColor:C.verde,backgroundColor:C.a(C.verde,.08),borderWidth:1.5,pointRadius:ptRadius,pointHoverRadius:5,tension:0.4,fill:true,pointBackgroundColor:fechas.map(f=>f===fechaSel?C.verde:'transparent'),pointBorderColor:C.verde},
-    {label:'Ecommerce',data:evolEco,borderColor:C.azul,backgroundColor:'transparent',borderWidth:1.5,pointRadius:ptRadius,pointHoverRadius:5,tension:0.4,pointBackgroundColor:fechas.map(f=>f===fechaSel?C.azul:'transparent'),pointBorderColor:C.azul},
-    {label:'Mesón',data:evolMeson,borderColor:C.dorado,backgroundColor:'transparent',borderWidth:1.5,pointRadius:ptRadius,pointHoverRadius:5,tension:0.4,pointBackgroundColor:fechas.map(f=>f===fechaSel?C.dorado:'transparent'),pointBorderColor:C.dorado}],
+  const _evolDs=[];
+  if(!_tv||_tv==='total')_evolDs.push({label:'Venta Total',data:evolTotal,borderColor:C.verde,backgroundColor:C.a(C.verde,.08),borderWidth:1.5,pointRadius:ptRadius,pointHoverRadius:5,tension:0.4,fill:true,pointBackgroundColor:fechas.map(f=>f===fechaSel?C.verde:'transparent'),pointBorderColor:C.verde});
+  if(!_tv||_tv==='eco')_evolDs.push({label:'Ecommerce',data:evolEco,borderColor:C.azul,backgroundColor:_tv==='eco'?C.a(C.azul,.08):'transparent',borderWidth:1.5,pointRadius:ptRadius,pointHoverRadius:5,tension:0.4,fill:_tv==='eco',pointBackgroundColor:fechas.map(f=>f===fechaSel?C.azul:'transparent'),pointBorderColor:C.azul});
+  if(!_tv||_tv==='meson')_evolDs.push({label:'Mesón',data:evolMeson,borderColor:C.dorado,backgroundColor:_tv==='meson'?C.a(C.dorado,.08):'transparent',borderWidth:1.5,pointRadius:ptRadius,pointHoverRadius:5,tension:0.4,fill:_tv==='meson',pointBackgroundColor:fechas.map(f=>f===fechaSel?C.dorado:'transparent'),pointBorderColor:C.dorado});
+  mk('cEvol','cEvol','line',fechas,_evolDs,
     {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:getLegendColor(),font:{size:9},boxWidth:10}},tooltip:{...tipConfig(),callbacks:{label:c=>`${c.dataset.label}: S/ ${fmtS(c.raw)}`}}},scales:scalesConfig(),
      onClick:(e,els)=>{if(els.length)toggleChartFiltro('fecha',fechas[els[0].index]);}});
 
@@ -936,7 +1004,7 @@ function actualizarCharts(){
      plugins:{legend:{display:false},tooltip:{...tipConfig(),callbacks:{title:items=>{const [k,v]=top10[items[0].dataIndex];return`[${v.cod}] ${k}`;},label:c=>'S/ '+fmtS(c.raw)}}},
      scales:{x:{...scalesConfig().x},y:{...scalesConfig().y,grid:{display:false}}},
      onClick:(e,els)=>{if(els.length)toggleChartFiltro('cod',top10Cods[els[0].index]);}};
-  const top10Ds=[{label:'Venta Total',data:top10.map(([,v])=>v.total),
+  const top10Ds=[{label:_metLabel,data:top10.map(([,v])=>v[_met]),
       backgroundColor:top10Cods.map(c=>c===codSel?C.teal:codSel?C.a(C.teal,dimAlpha):C.a(C.teal,.7)),
       borderColor:C.teal,borderWidth:1.5,borderRadius:3}];
   mk('cTop','cTop','bar',top10Labels,top10Ds,top10Opts);
@@ -960,18 +1028,20 @@ function actualizarCharts(){
 // ── HOJA PROMEDIO ──
 let _promRows=[];
 let promPage=0;
-let promSort={col:'avgTotal',dir:'desc'};
+let promSort={col:'avgVenta',dir:'desc'};
 let _dpTimer;
 function _dp(){clearTimeout(_dpTimer);_dpTimer=setTimeout(actualizarPromedio,320);}
 
 function actualizarPromedio(){
   const nDias=new Set(filteredData.map(d=>d.fecha)).size||1;
+  const _tv=filtros.tipoVenta||'';
+  const _met=_tv==='eco'?'eco':_tv==='meson'?'meson':'total';
   // agrupar por local
   const map=new Map();
   for(const d of filteredData){
     let e=map.get(d.local);
-    if(!e){e={cod:d.cod,marca:d.marca,formato:d.formato,auditor:d.auditor||'',supervisor:d.supervisor||'',total:0,stockVal:0};map.set(d.local,e);}
-    e.total+=d.total;
+    if(!e){e={cod:d.cod,marca:d.marca,formato:d.formato,auditor:d.auditor||'',supervisor:d.supervisor||'',total:0,eco:0,meson:0,stockVal:0};map.set(d.local,e);}
+    e.total+=d.total;e.eco+=d.eco;e.meson+=d.meson;
     e.stockVal+=d.stockVal;
   }
   const search=(document.getElementById('pSearch')||{}).value||'';
@@ -979,8 +1049,13 @@ function actualizarPromedio(){
   _promRows=[...map.entries()]
     .map(([local,v])=>({local,cod:v.cod,marca:v.marca,formato:v.formato,
       auditor:v.auditor,supervisor:v.supervisor,
-      avgTotal:v.total/nDias, avgStock:v.stockVal/nDias}))
+      avgVenta:v[_met]/nDias, avgStock:v.stockVal/nDias}))
     .filter(r=>!q||(r.local.toLowerCase().includes(q)||r.cod.toLowerCase().includes(q)));
+  // etiqueta dinámica de columna
+  const thVenta=document.getElementById('pth-avgTotal');
+  if(thVenta)thVenta.textContent=(_tv==='eco'?'Prom. Eco/día':_tv==='meson'?'Prom. Mesón/día':'Prom. Total/día')+' ↕';
+  // si el sort estaba en avgTotal, mantenlo funcional
+  if(promSort.col==='avgTotal')promSort.col='avgVenta';
   _sortPromRows();
   promPage=0;
   document.getElementById('prom-info').textContent=
@@ -997,12 +1072,15 @@ function _sortPromRows(){
   ['cod','local','marca','formato','avgTotal','avgStock','auditor','supervisor'].forEach(c=>{
     const th=document.getElementById('pth-'+c);if(!th)return;
     th.classList.remove('sort-asc','sort-desc');
-    if(c===promSort.col)th.classList.add(promSort.dir==='desc'?'sort-desc':'sort-asc');
+    const activeCol=promSort.col==='avgVenta'?'avgTotal':promSort.col;
+    if(c===activeCol)th.classList.add(promSort.dir==='desc'?'sort-desc':'sort-asc');
   });
 }
 
 function sortPromedio(col){
-  promSort=promSort.col===col?{col,dir:promSort.dir==='desc'?'asc':'desc'}:{col,dir:'desc'};
+  // la columna de venta se llama avgVenta en los datos
+  const _col=col==='avgTotal'?'avgVenta':col;
+  promSort=promSort.col===_col?{col:_col,dir:promSort.dir==='desc'?'asc':'desc'}:{col:_col,dir:'desc'};
   promPage=0;_sortPromRows();renderPromedio();
 }
 
@@ -1017,7 +1095,7 @@ function renderPromedio(){
       <td title="${r.local}">${r.local}</td>
       <td>${badgeMarca(r.marca)}</td>
       <td>${r.formato}</td>
-      <td class="tnum">S/ ${fmtS(r.avgTotal)}</td>
+      <td class="tnum">S/ ${fmtS(r.avgVenta)}</td>
       <td class="tnum">S/ ${fmtS(r.avgStock)}</td>
       <td>${r.auditor||'—'}</td>
       <td>${r.supervisor||'—'}</td>
@@ -1039,7 +1117,7 @@ function goToPageProm(delta){
 function limpiarFiltrosPromedio(){
   const s=document.getElementById('pSearch');if(s)s.value='';
   const sv=document.getElementById('pSort');if(sv)sv.value='avgTotal-desc';
-  promSort={col:'avgTotal',dir:'desc'};promPage=0;
+  promSort={col:'avgVenta',dir:'desc'};promPage=0;
   actualizarPromedio();
 }
 
@@ -1083,10 +1161,9 @@ function renderTblPage(){
       <td>${d.formato}</td><td>${badgeMarca(d.marca)}</td><td>${d.depto}</td>
       <td class="tnum">S/ ${fmtS(d.eco)}</td><td class="tnum">S/ ${fmtS(d.meson)}</td>
       <td class="tnum">S/ ${fmtS(d.total)}</td><td class="tnum">S/ ${fmtS(d.stockVal)}</td>
-      <td style="font-size:10px" title="${d.sku||''}">${d.sku||'—'}</td>
       <td>${d.auditor||'—'}</td><td>${d.supervisor||'—'}</td>
     </tr>`).join('')
-    :'<tr><td colspan="13" style="text-align:center;color:var(--tx-d);padding:20px">Sin resultados</td></tr>';
+    :'<tr><td colspan="12" style="text-align:center;color:var(--tx-d);padding:20px">Sin resultados</td></tr>';
   // controles de paginación
   const prev=document.getElementById('tbl-prev');
   const next=document.getElementById('tbl-next');
@@ -1104,6 +1181,81 @@ function goToPage(delta){
 
 function badgeMarca(m){const cls=m==='INKAFARMA'?'badge-inka':m==='MIFARMA'?'badge-mifarma':m==='MIA'?'badge-mia':m==='MAX'?'badge-max':'badge-other';return `<span class="badge ${cls}">${m}</span>`;}
 
+// ── TOP VENTAS ──
+let _tvRows=[];
+let tvPage=0;
+let tvSort={col:'importeSku',dir:'desc'};
+let _dtvTimer;
+function _dtv(){clearTimeout(_dtvTimer);_dtvTimer=setTimeout(actualizarTopVentas,320);}
+
+function actualizarTopVentas(){
+  const search=(document.getElementById('tvSearch')||{value:''}).value.toLowerCase();
+  const _TV_STR=new Set(['fecha','cod','local','marca','formato','sku']);
+  _tvRows=getDisplayData().filter(d=>{
+    if(!search)return true;
+    return d.local.toLowerCase().includes(search)||d.cod.toLowerCase().includes(search)||(d.sku||'').toLowerCase().includes(search);
+  });
+  if(tvSort.col){
+    const m=tvSort.dir==='desc'?-1:1;
+    _tvRows.sort((a,b)=>_TV_STR.has(tvSort.col)
+      ?(a[tvSort.col]||'').localeCompare(b[tvSort.col]||'')*m
+      :((a[tvSort.col]||0)-(b[tvSort.col]||0))*m);
+  }
+  ['fecha','cod','local','marca','formato','sku','cantUnd','importeSku','total'].forEach(c=>{
+    const th=document.getElementById('tvth-'+c);if(!th)return;
+    th.classList.remove('sort-asc','sort-desc');
+    if(c===tvSort.col)th.classList.add(tvSort.dir==='desc'?'sort-desc':'sort-asc');
+  });
+  tvPage=0;
+  renderTopVentas();
+}
+
+function sortTopVentas(col){
+  tvSort=tvSort.col===col?{col,dir:tvSort.dir==='desc'?'asc':'desc'}:{col,dir:'desc'};
+  tvPage=0;
+  actualizarTopVentas();
+}
+
+function renderTopVentas(){
+  const total=_tvRows.length;
+  const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+  if(tvPage>=totalPages)tvPage=totalPages-1;
+  const slice=_tvRows.slice(tvPage*PAGE_SIZE,(tvPage+1)*PAGE_SIZE);
+  const el=document.getElementById('tv-count');
+  if(el)el.textContent=total+' registros · pág '+(tvPage+1)+' de '+totalPages;
+  const tb=document.getElementById('tbTopVentas');
+  if(tb)tb.innerHTML=slice.length
+    ?slice.map(d=>`<tr>
+      <td>${d.fecha}</td>
+      <td>${d.cod}</td>
+      <td title="${d.local}">${d.local}</td>
+      <td>${badgeMarca(d.marca)}</td>
+      <td>${d.formato}</td>
+      <td style="font-size:10px" title="${d.sku||''}">${d.sku||'—'}</td>
+      <td class="tnum">${fmtK(d.cantUnd)}</td>
+      <td class="tnum">S/ ${fmtS(d.importeSku)}</td>
+      <td>${d.auditor||'—'}</td>
+    </tr>`).join('')
+    :'<tr><td colspan="9" style="text-align:center;color:var(--tx-d);padding:20px">Sin resultados</td></tr>';
+  const prev=document.getElementById('tv-prev');
+  const next=document.getElementById('tv-next');
+  const info=document.getElementById('tv-page-info');
+  if(prev)prev.disabled=tvPage===0;
+  if(next)next.disabled=tvPage>=totalPages-1;
+  if(info)info.textContent=(tvPage+1)+' / '+totalPages;
+}
+
+function goToPageTV(delta){
+  tvPage+=delta;renderTopVentas();
+  const el=document.querySelector('#tab4 .tc2-inner');if(el)el.scrollTop=0;
+}
+
+function limpiarFiltrosTopVentas(){
+  const s=document.getElementById('tvSearch');if(s)s.value='';
+  tvSort={col:'importeSku',dir:'desc'};tvPage=0;
+  actualizarTopVentas();
+}
+
 // ── LIMPIAR FILTROS ──
 function limpiarTodosFiltros(){
   // barra principal
@@ -1114,6 +1266,7 @@ function limpiarTodosFiltros(){
   const fCodSel=document.getElementById('fCodSel');if(fCodSel){fCodSel.value='';fCodSel.style.display='none';}
   const fCod=document.getElementById('fCod');if(fCod){fCod.value='';fCod.style.display='';}
   const fMarcaEl=document.getElementById('fMarca');if(fMarcaEl)fMarcaEl.value='';
+  const fTVEl=document.getElementById('fTipoVenta');if(fTVEl)fTVEl.value='';
   // filtros de tabla detalle
   limpiarFiltrosDetalle();
   // repoblar fechas y re-renderizar
@@ -1150,7 +1303,7 @@ function sortTabla(col){
 function setTab(idx,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  for(let i=0;i<4;i++){const t=document.getElementById('tab'+i);if(t)t.classList.toggle('hidden',i!==idx);}
+  for(let i=0;i<5;i++){const t=document.getElementById('tab'+i);if(t)t.classList.toggle('hidden',i!==idx);}
 }
 
 // ── TEMA ──
